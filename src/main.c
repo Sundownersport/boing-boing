@@ -168,9 +168,9 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
     },    {
         "................",
         ".h.#............",
-        "...#..#.........",
-        "####............",
-        "....#........#..",
+        "...#..b.........",
+        "####..x.........",
+        "....bb.......#..",
         ".......#.....#.^",
         "..........#..#..",
         ".............#..",
@@ -258,9 +258,13 @@ static void draw_tile(unsigned char r, unsigned char c) {
         gram_rect(x + 1, y + 2, 2, 3, C_WHITE);
         break;
     case 'h':
-        gram_rect(x + 1, y + 2, 5, 2, C_HEART);
-        gram_rect(x + 2, y + 4, 3, 1, C_HEART);
-        gram_rect(x + 3, y + 5, 1, 1, C_HEART);
+        gram_rect(x + 1, y + 1, 2, 1, C_HEART);
+        gram_rect(x + 4, y + 1, 2, 1, C_HEART);
+        gram_rect(x, y + 2, 7, 2, C_HEART);
+        gram_rect(x + 1, y + 4, 5, 1, C_HEART);
+        gram_rect(x + 2, y + 5, 3, 1, C_HEART);
+        gram_rect(x + 3, y + 6, 1, 1, C_HEART);
+        gram_rect(x + 1, y + 2, 1, 1, C_WHITE);
         break;
     }
 }
@@ -491,9 +495,13 @@ static void draw_level() {
     queue_draw_sprite(64, PF_Y, 64, MAP_H << 3, 64, 0, LEVEL_SLOT);
     draw_text(4, 8, "LEVEL");
     draw_text(52, 8, two_digits(level + 1));
-    queue_draw_box(97, 10, 5, 2, C_HEART);
-    queue_draw_box(98, 12, 3, 1, C_HEART);
-    queue_draw_box(99, 13, 1, 1, C_HEART);
+    queue_draw_box(98, 9, 2, 1, C_HEART);
+    queue_draw_box(101, 9, 2, 1, C_HEART);
+    queue_draw_box(97, 10, 7, 2, C_HEART);
+    queue_draw_box(98, 12, 5, 1, C_HEART);
+    queue_draw_box(99, 13, 3, 1, C_HEART);
+    queue_draw_box(100, 14, 1, 1, C_HEART);
+    queue_draw_box(98, 10, 1, 1, C_WHITE);
     draw_text(108, 8, two_digits(hearts_left));
 }
 

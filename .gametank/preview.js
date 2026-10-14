@@ -44,9 +44,13 @@ function drawTile(g, m, r, c, x = c << 3, y = r << 3) {
         rect(g, x + 1, y + 2, 2, 3, K.C_WHITE);
         break;
     case 'h':
-        rect(g, x + 1, y + 2, 5, 2, K.C_HEART);
-        rect(g, x + 2, y + 4, 3, 1, K.C_HEART);
-        rect(g, x + 3, y + 5, 1, 1, K.C_HEART);
+        rect(g, x + 1, y + 1, 2, 1, K.C_HEART);
+        rect(g, x + 4, y + 1, 2, 1, K.C_HEART);
+        rect(g, x, y + 2, 7, 2, K.C_HEART);
+        rect(g, x + 1, y + 4, 5, 1, K.C_HEART);
+        rect(g, x + 2, y + 5, 3, 1, K.C_HEART);
+        rect(g, x + 3, y + 6, 1, 1, K.C_HEART);
+        rect(g, x + 1, y + 2, 1, 1, K.C_WHITE);
         break;
     }
 }
@@ -197,9 +201,13 @@ function drawLevel(gt, g, n, heartCount) {
     gt.blit(g, 128, 0, K.PF_Y);
     gt.text(4, 8, 'LEVEL');
     gt.text(52, 8, two(n + 1));
-    gt.box(97, 10, 5, 2, K.C_HEART);
-    gt.box(98, 12, 3, 1, K.C_HEART);
-    gt.box(99, 13, 1, 1, K.C_HEART);
+    gt.box(98, 9, 2, 1, K.C_HEART);
+    gt.box(101, 9, 2, 1, K.C_HEART);
+    gt.box(97, 10, 7, 2, K.C_HEART);
+    gt.box(98, 12, 5, 1, K.C_HEART);
+    gt.box(99, 13, 3, 1, K.C_HEART);
+    gt.box(100, 14, 1, 1, K.C_HEART);
+    gt.box(98, 10, 1, 1, K.C_WHITE);
     gt.text(108, 8, two(heartCount));
 }
 
