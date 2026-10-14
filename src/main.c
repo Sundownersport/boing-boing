@@ -1,6 +1,7 @@
 #include "gt/gametank.h"
 #include "gt/input.h"
 #include "gt/gfx/draw_queue.h"
+#include "gt/gfx/draw_direct.h"
 #include "gt/feature/text/text.h"
 
 #define COL(h, s, l) (((h) << 5) | ((s) << 3) | (l))
@@ -21,19 +22,19 @@
 #define NUM_LEVELS 6
 
 #define BALL_SIZE 6
-#define SUB 5
+#define SUB 6
 #define MAX_BX ((128 - BALL_SIZE) << SUB)
-#define GRAVITY 2
-#define MAX_FALL 80
-#define BOUNCE 56
-#define SUPER_BOUNCE 88
-#define ACCEL 2
-#define FRICTION 1
-#define MAX_VX 24
-#define DASH_SPEED 48
-#define DASH_FRAMES 48
+#define GRAVITY 5
+#define MAX_FALL 176
+#define BOUNCE 125
+#define SUPER_BOUNCE 197
+#define ACCEL 5
+#define FRICTION 2
+#define MAX_VX 53
+#define DASH_SPEED 106
+#define DASH_FRAMES 44
 
-#define MAX_BOXES 160
+#define LEVEL_SLOT 7
 
 #define STATE_TITLE 0
 #define STATE_PLAY 1
@@ -139,79 +140,69 @@ static unsigned char hearts_left;
 static unsigned char level;
 static unsigned char state;
 static unsigned char timer;
-static bool dirty;
-
 static int bx, by, vx, vy;
 static unsigned char dash_timer;
-
-static unsigned char box_x[MAX_BOXES], box_y[MAX_BOXES], box_w[MAX_BOXES], box_h[MAX_BOXES], box_c[MAX_BOXES];
-static unsigned char box_count;
 
 static SpriteSlot font;
 static char num_buf[3];
 
-static void add_box(unsigned char x, unsigned char y, unsigned char w, unsigned char h, unsigned char c) {
-    if (box_count == MAX_BOXES) return;
-    box_x[box_count] = x;
-    box_y[box_count] = y;
-    box_w[box_count] = w;
-    box_h[box_count] = h;
-    box_c[box_count] = c;
-    ++box_count;
+static void gram_begin() {
+    direct_prepare_sprite_ram_array_mode(LEVEL_SLOT);
 }
 
-static unsigned char run_length(unsigned char r, unsigned char c, char t) {
-    unsigned char n = 1;
-    while (c + n < MAP_W && map[r][c + n] == t) ++n;
-    return n;
+static void gram_end() {
+    flagsMirror |= DMA_ENABLE;
+    *dma_flags = flagsMirror;
 }
 
-static void build_boxes() {
-    unsigned char r, c, x, y, n, i;
-    box_count = 0;
-    for (r = 0; r < MAP_H; ++r) {
-        y = PF_Y + (r << 3);
-        for (c = 0; c < MAP_W; ++c) {
-            x = c << 3;
-            switch (map[r][c]) {
-            case '#':
-                n = run_length(r, c, '#');
-                add_box(x, y, (n << 3) - 1, 7, C_STONE);
-                c += n - 1;
-                break;
-            case 'x':
-                n = run_length(r, c, 'x');
-                add_box(x, y + 5, n << 3, 3, C_SPIKE);
-                for (i = 0; i < n; ++i) {
-                    add_box(x + (i << 3) + 3, y + 2, 2, 3, C_SPIKE);
-                }
-                c += n - 1;
-                break;
-            case 'b':
-                add_box(x, y, 7, 7, C_BRICK);
-                add_box(x + 1, y + 3, 5, 1, C_BRICK_DARK);
-                break;
-            case '^':
-                add_box(x, y, 7, 7, C_SPRING);
-                add_box(x + 2, y + 1, 3, 2, C_WHITE);
-                break;
-            case '>':
-                add_box(x, y, 7, 7, C_ARROW);
-                add_box(x + 4, y + 2, 2, 3, C_WHITE);
-                break;
-            case '<':
-                add_box(x, y, 7, 7, C_ARROW);
-                add_box(x + 1, y + 2, 2, 3, C_WHITE);
-                break;
-            case 'h':
-                add_box(x + 1, y + 2, 5, 2, C_HEART);
-                add_box(x + 2, y + 4, 3, 1, C_HEART);
-                add_box(x + 3, y + 5, 1, 1, C_HEART);
-                break;
-            }
-        }
+static void gram_rect(unsigned char x, unsigned char y, unsigned char w, unsigned char h, unsigned char c) {
+    unsigned char i;
+    unsigned char* p = vram + ((unsigned int)y << 7) + x;
+    while (h--) {
+        for (i = 0; i < w; ++i) p[i] = c;
+        p += 128;
     }
-    dirty = false;
+}
+
+static void draw_tile(unsigned char r, unsigned char c) {
+    unsigned char x = c << 3, y = r << 3;
+    switch (map[r][c]) {
+    case '#':
+        gram_rect(x, y, (c < MAP_W - 1 && map[r][c + 1] == '#') ? 8 : 7, 7, C_STONE);
+        break;
+    case 'x':
+        gram_rect(x, y + 5, 8, 3, C_SPIKE);
+        gram_rect(x + 3, y + 2, 2, 3, C_SPIKE);
+        break;
+    case 'b':
+        gram_rect(x, y, 7, 7, C_BRICK);
+        gram_rect(x + 1, y + 3, 5, 1, C_BRICK_DARK);
+        break;
+    case '^':
+        gram_rect(x, y, 7, 7, C_SPRING);
+        gram_rect(x + 2, y + 1, 3, 2, C_WHITE);
+        break;
+    case '>':
+        gram_rect(x, y, 7, 7, C_ARROW);
+        gram_rect(x + 4, y + 2, 2, 3, C_WHITE);
+        break;
+    case '<':
+        gram_rect(x, y, 7, 7, C_ARROW);
+        gram_rect(x + 1, y + 2, 2, 3, C_WHITE);
+        break;
+    case 'h':
+        gram_rect(x + 1, y + 2, 5, 2, C_HEART);
+        gram_rect(x + 2, y + 4, 3, 1, C_HEART);
+        gram_rect(x + 3, y + 5, 1, 1, C_HEART);
+        break;
+    }
+}
+
+static void clear_tile(unsigned char r, unsigned char c) {
+    map[r][c] = '.';
+    gram_begin();
+    gram_rect(c << 3, r << 3, 8, 8, C_BG);
+    gram_end();
 }
 
 static void load_level() {
@@ -234,7 +225,14 @@ static void load_level() {
             map[r][c] = t;
         }
     }
-    build_boxes();
+    gram_begin();
+    for (r = 0; r < MAP_H; ++r) {
+        gram_rect(0, r << 3, 128, 8, C_BG);
+        for (c = 0; c < MAP_W; ++c) {
+            draw_tile(r, c);
+        }
+    }
+    gram_end();
 }
 
 static char tile_at(unsigned char px, unsigned char py) {
@@ -264,8 +262,7 @@ static void bounce_on(unsigned char px, unsigned char py) {
         dash_timer = DASH_FRAMES;
         break;
     case 'b':
-        map[r][c] = '.';
-        dirty = true;
+        clear_tile(r, c);
         vy = -BOUNCE;
         break;
     default:
@@ -338,9 +335,8 @@ static void touch(unsigned char px, unsigned char py) {
     unsigned char r = py >> 3, c = px >> 3;
     if (r >= MAP_H) return;
     if (map[r][c] == 'h') {
-        map[r][c] = '.';
+        clear_tile(r, c);
         --hearts_left;
-        dirty = true;
     } else if (map[r][c] == 'x') {
         state = STATE_DEAD;
         timer = 0;
@@ -390,7 +386,6 @@ static void update_play() {
         return;
     }
     check_touch();
-    if (dirty) build_boxes();
     if (state == STATE_PLAY && hearts_left == 0) {
         state = STATE_CLEAR;
         timer = 0;
@@ -421,10 +416,9 @@ static void draw_ball(unsigned char x, unsigned char y) {
 }
 
 static void draw_level() {
-    unsigned char i;
-    for (i = 0; i < box_count; ++i) {
-        queue_draw_box(box_x[i], box_y[i], box_w[i], box_h[i], box_c[i]);
-    }
+    queue_draw_box(1, 7, SCREEN_WIDTH - 2, PF_Y - 7, C_BG);
+    queue_draw_sprite(0, PF_Y, 64, MAP_H << 3, 0, 0, LEVEL_SLOT);
+    queue_draw_sprite(64, PF_Y, 64, MAP_H << 3, 64, 0, LEVEL_SLOT);
     draw_text(4, 8, "LEVEL");
     draw_text(52, 8, two_digits(level + 1));
     queue_draw_box(97, 10, 5, 2, C_HEART);
@@ -494,9 +488,9 @@ void main() {
             break;
         }
 
-        queue_clear_screen(state == STATE_DEAD && timer < 4 ? C_SPIKE : C_BG);
         switch (state) {
         case STATE_TITLE:
+            queue_clear_screen(C_BG);
             draw_title();
             break;
         case STATE_PLAY:
@@ -504,7 +498,8 @@ void main() {
             draw_ball(bx >> SUB, PF_Y + (by >> SUB));
             break;
         case STATE_DEAD:
-            draw_level();
+            if (timer < 4) queue_clear_screen(C_SPIKE);
+            else draw_level();
             if (timer & 4) draw_ball(bx >> SUB, PF_Y + (by >> SUB));
             break;
         case STATE_CLEAR:
@@ -513,6 +508,7 @@ void main() {
             draw_text(40, 56, "CLEAR!");
             break;
         case STATE_WIN:
+            queue_clear_screen(C_BG);
             draw_text(28, 48, "YOU WIN!");
             draw_text(20, 72, "PRESS START");
             break;
