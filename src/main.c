@@ -180,14 +180,14 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         ".....>.........#",
         "##xxxxxxxxxxxx^.",
     },    {
-        "................",
+        "...............S",
         "................",
         ".#####xx###x####",
         "................",
         "................",
         "######xx###x###.",
         "h...............",
-        "...............S",
+        "................",
         "......x..x.xh###",
         "......#..#.#....",
         "......#.x#......",
@@ -233,8 +233,13 @@ static void draw_tile(unsigned char r, unsigned char c) {
         gram_rect(x, y, (c < MAP_W - 1 && map[r][c + 1] == '#') ? 8 : 7, 7, C_STONE);
         break;
     case 'x':
-        gram_rect(x, y + 5, 8, 3, C_SPIKE);
-        gram_rect(x + 3, y + 2, 2, 3, C_SPIKE);
+        gram_rect(x + 3, y, 1, 7, C_SPIKE);
+        gram_rect(x, y + 3, 7, 1, C_SPIKE);
+        gram_rect(x + 2, y + 2, 3, 3, C_SPIKE);
+        gram_rect(x + 1, y + 1, 1, 1, C_SPIKE);
+        gram_rect(x + 5, y + 1, 1, 1, C_SPIKE);
+        gram_rect(x + 1, y + 5, 1, 1, C_SPIKE);
+        gram_rect(x + 5, y + 5, 1, 1, C_SPIKE);
         break;
     case 'b':
         gram_rect(x, y, 7, 7, C_BRICK);

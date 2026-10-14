@@ -19,8 +19,13 @@ function drawTile(g, m, r, c, x = c << 3, y = r << 3) {
         rect(g, x, y, (c < K.MAP_W - 1 && m[r][c + 1] === '#') ? 8 : 7, 7, K.C_STONE);
         break;
     case 'x':
-        rect(g, x, y + 5, 8, 3, K.C_SPIKE);
-        rect(g, x + 3, y + 2, 2, 3, K.C_SPIKE);
+        rect(g, x + 3, y, 1, 7, K.C_SPIKE);
+        rect(g, x, y + 3, 7, 1, K.C_SPIKE);
+        rect(g, x + 2, y + 2, 3, 3, K.C_SPIKE);
+        rect(g, x + 1, y + 1, 1, 1, K.C_SPIKE);
+        rect(g, x + 5, y + 1, 1, 1, K.C_SPIKE);
+        rect(g, x + 1, y + 5, 1, 1, K.C_SPIKE);
+        rect(g, x + 5, y + 5, 1, 1, K.C_SPIKE);
         break;
     case 'b':
         rect(g, x, y, 7, 7, K.C_BRICK);
