@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build ROM (local)",
+            "type": "shell",
+            "command": "make import && make",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": {
+                "owner": "cc65",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.*?)(?::|\\()(\\d+)\\)?: (Error|Warning): (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            }
+        },
+        {
+            "label": "Build ROM (GitHub)",
+            "type": "shell",
+            "command": "sh scripts/ci_build.sh",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Install toolchain",
+            "type": "shell",
+            "command": "make prereqs",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "make clean",
+            "problemMatcher": []
+        }
+    ]
+}

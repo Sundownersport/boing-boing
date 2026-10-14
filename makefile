@@ -213,16 +213,18 @@ $(ODIR)/%.cfg $(ODIR)/%.inc src/gen/assets/%.s.asset: project.json scripts/build
 
 import : $(ODIR)/gametank-2M.cfg $(ODIR)/bankMakeList.inc
 
-prereqs:
-	mkdir tools ;\
-	cd tools ;\
-	git clone git@github.com:google/zopfli.git ;\
-	cd zopfli ;\
-	make ;\
-	cd .. ;\
-	git clone git@github.com:cc65/cc65.git ;\
-	cd cc65 ;\
-	git checkout 6efe447d14a31e98cb14e8a3d45621e844c89ebe ;\
-	make bin ;\
-	make lib ;\
-	echo 'DONE - built zopfli and cc65, install nodejs using your usual package manager'
+CC65_COMMIT = 6efe447d14a31e98cb14e8a3d45621e844c89ebe
+
+prereqs: tools/cc65/bin/ld65 tools/zopfli/zopfli
+
+tools/cc65/bin/ld65:
+	rm -rf tools/cc65
+	git clone https://github.com/cc65/cc65.git tools/cc65
+	git -C tools/cc65 checkout $(CC65_COMMIT)
+	$(MAKE) -C tools/cc65 -j$(shell nproc) bin
+	$(MAKE) -C tools/cc65 -j$(shell nproc) lib
+
+tools/zopfli/zopfli:
+	rm -rf tools/zopfli
+	git clone --depth 1 https://github.com/google/zopfli.git tools/zopfli
+	$(MAKE) -C tools/zopfli -j$(shell nproc) zopfli

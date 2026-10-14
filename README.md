@@ -14,6 +14,20 @@ The ball bounces on its own. Steer it left and right with the d-pad and collect 
 
 ## Building
 
-GitHub Actions builds the ROM on every push. Download `boing.gtr` from the run's artifacts and open it in the [GameTank emulator](https://github.com/clydeshaffer/GameTankEmulator).
+Locally, with git, make, a C compiler and Node.js:
+
+```
+make prereqs
+make import
+make
+```
+
+`make prereqs` builds cc65 and zopfli into `tools/` once. The ROM is written to `bin/boing.gtr`.
+
+On GitHub, run the Build workflow from the Actions tab and download `boing-rom` from the run's artifacts, or run `scripts/ci_build.sh`, which starts the workflow, waits for it and downloads the ROM to `bin/`.
+
+In VS Code, both are under Terminal > Run Build Task (Ctrl+Shift+B).
+
+Open the ROM in the [GameTank emulator](https://github.com/clydeshaffer/GameTankEmulator).
 
 Built on [gametank_sdk](https://github.com/clydeshaffer/gametank_sdk).
