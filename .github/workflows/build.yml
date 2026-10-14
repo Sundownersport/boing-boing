@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CC65_COMMIT: 6efe447d14a31e98cb14e8a3d45621e844c89ebe
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install zopfli
+        run: sudo apt-get update && sudo apt-get install -y zopfli
+
+      - name: Cache cc65
+        id: cache-cc65
+        uses: actions/cache@v4
+        with:
+          path: tools/cc65
+          key: cc65-${{ env.CC65_COMMIT }}
+
+      - name: Build cc65
+        if: steps.cache-cc65.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/cc65/cc65.git tools/cc65
+          cd tools/cc65
+          git checkout $CC65_COMMIT
+          make -j$(nproc) bin
+          make -j$(nproc) lib
+
+      - name: Build ROM
+        run: |
+          make import
+          make
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: boing-rom
+          path: bin/boing.gtr

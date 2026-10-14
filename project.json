@@ -1,0 +1,13 @@
+{
+    "title" : "Boing Boing!",
+    "romname" : "boing.gtr",
+    "progbanks" : 1,
+    "modules" : [
+        "PERSIST",
+        "RANDOM",
+        "TEXT",
+        "DRAWQUEUE",
+        "PADDLEINPUT",
+        "AUDIO_DEFAULT_FM"
+    ]
+}
