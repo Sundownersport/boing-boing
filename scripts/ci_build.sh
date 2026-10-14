@@ -12,6 +12,6 @@ while [ "$run" = "$before" ]; do
 done
 
 gh run watch $run -R $repo --exit-status
-rm -f bin/boing.gtr
+rm -f bin/*.gtr
 gh run download $run -R $repo -n boing-rom -D bin
-ls -l bin/boing.gtr
+ls -l bin/*.gtr

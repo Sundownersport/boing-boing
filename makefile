@@ -32,6 +32,7 @@ ROMDIR = bin
 
 # ROM name is now set in project.json
 TARGET := $(shell node -p "require('./project.json').romname")
+TITLE := $(shell node -p "require('./project.json').title")
 
 EMUPATH=../GameTankEmulator
 
@@ -78,6 +79,7 @@ BANKS = $(patsubst %,$(ROMDIR)/$(TARGET).%,$(_BANKS))
 
 $(ROMDIR)/$(TARGET): $(ODIR)/bankMakeList.inc $(BANKS)
 	cat $(BANKS) > $@
+	cp $@ "$(ROMDIR)/$(TITLE).gtr"
 
 $(info ASSETOBJS is $(ASSETOBJS))
 
