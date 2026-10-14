@@ -21,16 +21,17 @@
 #define NUM_LEVELS 6
 
 #define BALL_SIZE 6
-#define MAX_BX ((128 - BALL_SIZE) << 4)
-#define GRAVITY 4
+#define SUB 5
+#define MAX_BX ((128 - BALL_SIZE) << SUB)
+#define GRAVITY 2
 #define MAX_FALL 80
 #define BOUNCE 56
 #define SUPER_BOUNCE 88
-#define ACCEL 3
-#define FRICTION 2
+#define ACCEL 2
+#define FRICTION 1
 #define MAX_VX 24
 #define DASH_SPEED 48
-#define DASH_FRAMES 24
+#define DASH_FRAMES 48
 
 #define MAX_BOXES 160
 
@@ -224,8 +225,8 @@ static void load_level() {
         for (c = 0; c < MAP_W; ++c) {
             t = levels[level][r][c];
             if (t == 'S') {
-                bx = (int)((c << 3) + 1) << 4;
-                by = (int)((r << 3) + 2) << 4;
+                bx = (int)((c << 3) + 1) << SUB;
+                by = (int)((r << 3) + 2) << SUB;
                 t = '.';
             } else if (t == 'h') {
                 ++hearts_left;
@@ -284,16 +285,16 @@ static void move_x() {
         vx = 0;
         dash_timer = 0;
     }
-    l = bx >> 4;
+    l = bx >> SUB;
     r = l + BALL_SIZE - 1;
-    t = by >> 4;
+    t = by >> SUB;
     b = t + BALL_SIZE - 1;
     if (vx > 0 && (is_solid(tile_at(r, t)) || is_solid(tile_at(r, b)))) {
-        bx = (int)((r & 0xF8) - BALL_SIZE) << 4;
+        bx = (int)((r & 0xF8) - BALL_SIZE) << SUB;
         vx = 0;
         dash_timer = 0;
     } else if (vx < 0 && (is_solid(tile_at(l, t)) || is_solid(tile_at(l, b)))) {
-        bx = (int)((l & 0xF8) + 8) << 4;
+        bx = (int)((l & 0xF8) + 8) << SUB;
         vx = 0;
         dash_timer = 0;
     }
@@ -313,13 +314,13 @@ static void move_y() {
         by = 0;
         if (vy < 0) vy = 0;
     }
-    l = bx >> 4;
+    l = bx >> SUB;
     r = l + BALL_SIZE - 1;
-    t = by >> 4;
+    t = by >> SUB;
     b = t + BALL_SIZE - 1;
     if (vy > 0) {
         if (is_solid(tile_at(l, b)) || is_solid(tile_at(r, b))) {
-            by = (int)((b & 0xF8) - BALL_SIZE) << 4;
+            by = (int)((b & 0xF8) - BALL_SIZE) << SUB;
             mid = l + (BALL_SIZE >> 1);
             if (is_solid(tile_at(mid, b))) bounce_on(mid, b);
             else if (is_solid(tile_at(l, b))) bounce_on(l, b);
@@ -327,7 +328,7 @@ static void move_y() {
         }
     } else if (vy < 0) {
         if (is_solid(tile_at(l, t)) || is_solid(tile_at(r, t))) {
-            by = (int)((t & 0xF8) + 8) << 4;
+            by = (int)((t & 0xF8) + 8) << SUB;
             vy = 0;
         }
     }
@@ -348,9 +349,9 @@ static void touch(unsigned char px, unsigned char py) {
 
 static void check_touch() {
     unsigned char l, r, t, b;
-    l = (bx >> 4) + 1;
+    l = (bx >> SUB) + 1;
     r = l + BALL_SIZE - 3;
-    t = (by >> 4) + 1;
+    t = (by >> SUB) + 1;
     b = t + BALL_SIZE - 3;
     touch(l, t);
     touch(r, t);
@@ -383,7 +384,7 @@ static void update_play() {
     steer();
     move_x();
     move_y();
-    if ((by >> 4) >= (MAP_H << 3) - 4) {
+    if ((by >> SUB) >= (MAP_H << 3) - 4) {
         state = STATE_DEAD;
         timer = 0;
         return;
@@ -437,20 +438,20 @@ static int title_y, title_vy;
 static void draw_title() {
     title_vy += GRAVITY;
     title_y += title_vy;
-    if (title_y > (96 << 4)) {
-        title_y = 96 << 4;
+    if (title_y > (96 << SUB)) {
+        title_y = 96 << SUB;
         title_vy = -BOUNCE;
     }
     draw_text(16, 32, "BOING BOING!");
     queue_draw_box(40, 102, 48, 7, C_STONE);
-    draw_ball(61, title_y >> 4);
+    draw_ball(61, title_y >> SUB);
     if (timer & 32) draw_text(20, 64, "PRESS START");
 }
 
 void main() {
     font = text_load_font();
     state = STATE_TITLE;
-    title_y = 60 << 4;
+    title_y = 60 << SUB;
     title_vy = 0;
     timer = 0;
 
@@ -500,15 +501,15 @@ void main() {
             break;
         case STATE_PLAY:
             draw_level();
-            draw_ball(bx >> 4, PF_Y + (by >> 4));
+            draw_ball(bx >> SUB, PF_Y + (by >> SUB));
             break;
         case STATE_DEAD:
             draw_level();
-            if (timer & 4) draw_ball(bx >> 4, PF_Y + (by >> 4));
+            if (timer & 4) draw_ball(bx >> SUB, PF_Y + (by >> SUB));
             break;
         case STATE_CLEAR:
             draw_level();
-            draw_ball(bx >> 4, PF_Y + (by >> 4));
+            draw_ball(bx >> SUB, PF_Y + (by >> SUB));
             draw_text(40, 56, "CLEAR!");
             break;
         case STATE_WIN:
