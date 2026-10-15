@@ -5,6 +5,8 @@
 #include "gt/feature/text/text.h"
 #include "gt/banking.h"
 #include "gen/bank_nums.h"
+#include "gt/audio/audio_coprocessor.h"
+#include "sounds.h"
 
 #define COL(h, s, l) (((h) << 5) | ((s) << 3) | (l))
 
@@ -51,6 +53,8 @@
 
 #define LEVEL_SLOT 7
 
+#define SFX(name, channel, priority) play_sound(SND_##name, channel, priority)
+
 #define STATE_TITLE 0
 #define STATE_PLAY 1
 #define STATE_DEAD 2
@@ -72,14 +76,15 @@
         "................",
         "................",
         "................",
-        ".S..............",
-        "################",
+        ".S...........h..",
+        "................",
         "################",
     },
 */
 
 #pragma rodata-name (push, "PROG0")
 static const char levels[][MAP_H][MAP_W + 1] = {
+    // Level 1
     {
         "................",
         "................",
@@ -95,6 +100,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "................",
         "################",
     },
+    // Level 2
     {
         "................",
         "1...............",
@@ -110,6 +116,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "...#...#.#...#..",
         "###.....1.....##",
     },
+    // Level 3
     {
         "................",
         "................",
@@ -125,6 +132,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "##cbcbcbcbcbcb##",
         "xxxxxxxxxxxxxxxx",
     },
+    // Level 4
     {
         "................",
         "................",
@@ -140,6 +148,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "################",
         "################",
     },
+    // Level 5
     {
         "................",
         "................",
@@ -155,6 +164,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "#..#....^....###",
         "xxxxxxxxxxxxxxxx",
     },
+    // Level 6
     {
         "................",
         "................",
@@ -170,6 +180,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "####.........###",
         "xxxxxxxxxxxxxxxx",
     },
+    // Level 7
     {
         "................",
         "................",
@@ -185,6 +196,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "######xxxx######",
         "######xxxx######",
     },
+    // Level 8
     {
         "................",
         "................",
@@ -200,7 +212,8 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "................",
         "^xxxxxxx#^xxxxxx",
     },  
-        {
+    // Level 9
+    {
         "S...............",
         "................",
         "................",
@@ -215,6 +228,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "h.b..cc..cc..^..",
         "xxxxxxxxxxxxxxxx",
     },
+    // Level 10
     {
         "................",
         "................",
@@ -230,6 +244,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "..#.............",
         "###...........##",
     }, 
+    // Level 11
     {
         "................",
         ".h.#............",
@@ -245,6 +260,7 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         ".....>.........#",
         "##xxxxxxxxxxxx^.",
     },    
+    // Level 12
     {
         "...............S",
         "................",
@@ -259,6 +275,22 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "......#.x#......",
         "^.......#.^.....",
         "##xxx#######xxxx",
+    },
+    // Level 13
+        {
+        "...............h",
+        "............cccc",
+        "...........c....",
+        "c..b...bbb......",
+        "................",
+        ".c...........##.",
+        "................",
+        "...c..c..#..#...",
+        "................",
+        "S...............",
+        "................",
+        "................",
+        "##x#xx##xx#x#xx^",
     },
 };
 
@@ -364,6 +396,43 @@ static const unsigned char pair_colors[] = { COL(4, 3, 5), COL(6, 3, 6), COL(3, 
 static const unsigned char plat_colors[] = { C_PLAT_SLOW, C_PLAT_MID, C_PLAT_FAST };
 static const char plat_chars[] = "poP";
 #pragma rodata-name (pop)
+
+static const unsigned char* voice_ptr[NUM_FM_CHANNELS];
+static unsigned char voice_len[NUM_FM_CHANNELS], voice_priority[NUM_FM_CHANNELS];
+
+static void play_sound(unsigned char id, unsigned char ch, unsigned char priority) {
+    if (voice_len[ch] && priority < voice_priority[ch]) return;
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    voice_ptr[ch] = sound_table[id] + 2;
+    voice_len[ch] = sound_table[id][0];
+    aram[FEEDBACK_AMT + ch] = sound_table[id][1];
+    pop_rom_bank();
+    voice_priority[ch] = priority;
+}
+
+static void tick_sounds() {
+    unsigned char ch, i, op;
+    const unsigned char* p;
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    for (ch = 0; ch < NUM_FM_CHANNELS; ++ch) {
+        if (!voice_len[ch]) continue;
+        p = voice_ptr[ch];
+        op = ch << 2;
+        for (i = 0; i < OPS_PER_CHANNEL; ++i) {
+            aram[AMPLITUDE + op + i] = p[i];
+            aram[PITCH_MSB + op + i] = p[4 + i];
+            aram[PITCH_LSB + op + i] = p[8 + i];
+        }
+        voice_ptr[ch] = p + 12;
+        if (--voice_len[ch] == 0) {
+            for (i = 0; i < OPS_PER_CHANNEL; ++i) aram[AMPLITUDE + op + i] = 128;
+            aram[FEEDBACK_AMT + ch] = 128;
+        }
+    }
+    pop_rom_bank();
+}
 
 static void gram_begin() {
     direct_prepare_sprite_ram_array_mode(LEVEL_SLOT);
@@ -506,6 +575,9 @@ static void load_level() {
     pop_rom_bank();
 }
 
+#pragma code-name (push, "PROG0")
+#pragma rodata-name (push, "PROG0")
+
 static char tile_at(unsigned char px, unsigned char py) {
     py >>= 3;
     if (py >= MAP_H) return '.';
@@ -522,24 +594,30 @@ static void bounce_on(unsigned char px, unsigned char py) {
     switch (map[r][c]) {
     case '^':
         vy = -SUPER_BOUNCE;
+        SFX(spring, 1, 1);
         break;
     case 'v':
         vy = -LOW_BOUNCE;
+        SFX(lowpad, 1, 1);
         break;
     case '>':
         vy = 0;
         vx = DASH_SPEED;
         dash_timer = DASH_FRAMES;
+        SFX(dash, 1, 1);
         break;
     case '<':
         vy = 0;
         vx = -DASH_SPEED;
         dash_timer = DASH_FRAMES;
+        SFX(dash, 1, 1);
         break;
     case 'b':
         clear_tile(r, c);
+        SFX(break, 1, 1);
         break;
     case 'c':
+        SFX(crack, 1, 1);
         if (shake_timer) redraw_tile(shake_r, shake_c, 0);
         map[r][c] = 'C';
         shake_r = r;
@@ -549,7 +627,10 @@ static void bounce_on(unsigned char px, unsigned char py) {
     case 'C':
         if (shake_timer && shake_r == r && shake_c == c) shake_timer = 0;
         clear_tile(r, c);
+        SFX(break, 1, 1);
         break;
+    default:
+        SFX(bounce, 0, 0);
     }
 }
 
@@ -621,6 +702,7 @@ static void move_y() {
     l = plat_hit();
     if (l != NO_PLATFORM) {
         if (vy > 0) {
+            SFX(bounce, 0, 0);
             by = (int)(plat_y[l] - BALL_SIZE) << SUB;
             vy = -BOUNCE;
         } else {
@@ -631,6 +713,7 @@ static void move_y() {
 }
 
 static void die() {
+    SFX(death, 3, 3);
     state = STATE_DEAD;
     timer = 0;
 }
@@ -652,6 +735,7 @@ static void teleport(char t, unsigned char r0, unsigned char c0) {
                 bx = (int)((c << 3) + 1) << SUB;
                 by = (int)((r << 3) + 1) << SUB;
                 tele_cooldown = 1;
+                SFX(teleport, 1, 2);
                 return;
             }
         }
@@ -666,9 +750,15 @@ static void touch(unsigned char px, unsigned char py) {
     if (t == 'h') {
         clear_tile(r, c);
         --hearts_left;
+        SFX(heart, 2, 1);
     } else if (t == 'k') {
         clear_tile(r, c);
-        if (--keys_left == 0) open_locks();
+        if (--keys_left == 0) {
+            open_locks();
+            SFX(unlock, 2, 2);
+        } else {
+            SFX(key, 2, 1);
+        }
     } else if (t == 'x') {
         die();
     } else if (t >= '1' && t <= '4') {
@@ -804,7 +894,7 @@ static void steer() {
     }
 }
 
-static void update_play() {
+static void update_play_banked() {
     if (player1_new_buttons & INPUT_MASK_START) {
         load_level();
         return;
@@ -822,9 +912,20 @@ static void update_play() {
     update_movers();
     update_shake();
     if (state == STATE_PLAY && hearts_left == 0 && keys_left == 0) {
+        SFX(clear, 3, 3);
         state = STATE_CLEAR;
         timer = 0;
     }
+}
+
+#pragma code-name (pop)
+#pragma rodata-name (pop)
+
+static void update_play() {
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    update_play_banked();
+    pop_rom_bank();
 }
 
 static void draw_text(unsigned char x, unsigned char y, const char* s) {
@@ -919,6 +1020,7 @@ void main() {
                 ++level;
                 if (level == NUM_LEVELS) {
                     state = STATE_WIN;
+                    SFX(win, 3, 3);
                 } else {
                     load_level();
                     state = STATE_PLAY;
@@ -962,5 +1064,6 @@ void main() {
         await_draw_queue();
         await_vsync(1);
         flip_pages();
+        tick_sounds();
     }
 }
