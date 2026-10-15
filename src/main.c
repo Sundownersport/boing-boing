@@ -29,7 +29,6 @@
 #define MAP_W 16
 #define MAP_H 13
 #define PF_Y 16
-#define NUM_LEVELS 11
 
 #define BALL_SIZE 6
 #define SUB 6
@@ -58,8 +57,29 @@
 #define STATE_CLEAR 3
 #define STATE_WIN 4
 
+/*
+    To add a level, copy this block (from { to },) into the list below,
+    where you want the level to appear. The level count updates itself.
+
+    {
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        ".S..............",
+        "################",
+        "################",
+    },
+*/
+
 #pragma rodata-name (push, "PROG0")
-static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
+static const char levels[][MAP_H][MAP_W + 1] = {
     {
         "................",
         "................",
@@ -180,6 +200,21 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "................",
         "^xxxxxxx#^xxxxxx",
     },  
+        {
+        "S...............",
+        "................",
+        "................",
+        "cc==========ppcc",
+        ".m..............",
+        "m........k.....h",
+        "..m...........##",
+        "................",
+        "..L.............",
+        "..L.............",
+        "..L.............",
+        "h.b..cc..cc..^..",
+        "xxxxxxxxxxxxxxxx",
+    },
     {
         "................",
         "................",
@@ -226,6 +261,8 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "##xxx#######xxxx",
     },
 };
+
+#define NUM_LEVELS (sizeof(levels) / sizeof(levels[0]))
 
 static char map[MAP_H][MAP_W];
 static unsigned char hearts_left;

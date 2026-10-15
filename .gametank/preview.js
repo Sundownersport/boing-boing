@@ -376,7 +376,7 @@ const TILES = '.#b^><xhSkLvcm1234=poP';
 GameTank.defineGame({
     source: 'src/main.c',
     requires: ['C_BG', 'C_STONE', 'C_BRICK', 'C_BRICK_DARK', 'C_SPRING', 'C_ARROW', 'C_SPIKE', 'C_HEART', 'C_KEY',
-        'C_PAD', 'C_CRUMBLE', 'C_CRACK', 'C_WHITE', 'MAP_W', 'MAP_H', 'PF_Y', 'NUM_LEVELS', 'BALL_SIZE', 'SUB',
+        'C_PAD', 'C_CRUMBLE', 'C_CRACK', 'C_WHITE', 'MAP_W', 'MAP_H', 'PF_Y', 'BALL_SIZE', 'SUB',
         'MAX_BX', 'GRAVITY', 'MAX_FALL', 'BOUNCE', 'SUPER_BOUNCE', 'LOW_BOUNCE', 'ACCEL', 'FRICTION', 'MAX_VX',
         'DASH_SPEED', 'DASH_FRAMES', 'SHAKE_FRAMES', 'MAX_MOVERS', 'C_PLAT_SLOW', 'C_PLAT_MID', 'C_PLAT_FAST',
         'MAX_PLATFORMS'],
@@ -412,7 +412,6 @@ GameTank.defineGame({
                 if (count(d) && count(d) !== 2) gt.problem(`${name}: teleporter ${d} appears ${count(d)} times, needs exactly 2`);
             }
         });
-        if (levels.length !== K.NUM_LEVELS) gt.problem(`NUM_LEVELS is ${K.NUM_LEVELS} but levels[] has ${levels.length}`);
         if (map) {
             const g = renderGram(map);
             for (let i = 0; i < g.length; ++i) gram[i] = g[i];
@@ -449,7 +448,7 @@ GameTank.defineGame({
             break;
         case CLEAR:
             if (timer === 60) {
-                if (level + 1 >= Math.min(K.NUM_LEVELS, levels.length)) state = WIN;
+                if (level + 1 >= levels.length) state = WIN;
                 else { ++level; loadLevel(); }
             }
             break;
