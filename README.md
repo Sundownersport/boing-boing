@@ -2,7 +2,7 @@
 
 A GameTank game based on The Bouncing Ball (GBJam 2015, Game Boy).
 
-The ball bounces on its own. Steer it left and right with the d-pad and collect every heart to clear the level. Start restarts the level.
+The ball bounces on its own. Steer it left and right with the d-pad and collect every heart and key to clear the level. Start restarts the level.
 
 | Tile | Effect |
 | --- | --- |
@@ -10,7 +10,13 @@ The ball bounces on its own. Steer it left and right with the d-pad and collect 
 | Orange block | Breaks after you bounce on it |
 | Green block | High bounce |
 | Cyan block | Launches you sideways |
-| Red spikes | Restart level |
+| Red spiked ball | Restart level |
+| Moving spiked ball | Slides between walls; restart level |
+| Blue block | Low bounce |
+| Sandy block | Cracks on the first bounce, breaks on the second |
+| Gold key | Collect every key to open the gold lock blocks and to clear the level |
+| Coloured ring | Teleports you to the other ring of the same colour |
+| Grey-teal block | Moving platform that follows a hidden track; darker is slower |
 
 ## Building
 

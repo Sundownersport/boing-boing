@@ -16,7 +16,15 @@
 #define C_ARROW      COL(6, 3, 4)
 #define C_SPIKE      COL(2, 3, 4)
 #define C_HEART      COL(3, 3, 5)
+#define C_KEY        COL(1, 3, 6)
+#define C_PAD        COL(5, 3, 4)
+#define C_CRUMBLE    COL(1, 1, 4)
+#define C_CRACK      COL(1, 1, 2)
+#define C_PLAT_SLOW  COL(6, 1, 3)
+#define C_PLAT_MID   COL(6, 1, 4)
+#define C_PLAT_FAST  COL(6, 1, 6)
 #define C_WHITE      7
+#define C_PAIR       1
 
 #define MAP_W 16
 #define MAP_H 13
@@ -35,6 +43,12 @@
 #define MAX_VX 53
 #define DASH_SPEED 106
 #define DASH_FRAMES 44
+#define LOW_BOUNCE 88
+#define SHAKE_FRAMES 16
+#define MAX_MOVERS 4
+#define MAX_PLATFORMS 8
+#define NO_PLATFORM 255
+#define GLYPH_Y 104
 
 #define LEVEL_SLOT 7
 
@@ -54,16 +68,16 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "................",
         "................",
         "................",
-        "................",
-        "..h.........h...",
-        "................",
-        ".S......h.......",
+        "...........LLL..",
+        "..h........LhL..",
+        "...........LLL..",
+        ".S......k.......",
         "................",
         "################",
     },
     {
         "................",
-        "................",
+        "1...............",
         "................",
         "................",
         "................",
@@ -74,7 +88,7 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "................",
         ".S............h.",
         "...#...#.#...#..",
-        "###.....#.....##",
+        "###.....1.....##",
     },
     {
         "................",
@@ -88,7 +102,7 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "..h....h....h...",
         "................",
         ".S..............",
-        "##bbbbbbbbbbbb##",
+        "##cbcbcbcbcbcb##",
         "xxxxxxxxxxxxxxxx",
     },
     {
@@ -96,7 +110,7 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "................",
         "................",
         ".h............h.",
-        "####........####",
+        "####m.......####",
         "................",
         "................",
         "................",
@@ -195,18 +209,107 @@ static const char levels[NUM_LEVELS][MAP_H][MAP_W + 1] = {
         "##xxx#######xxxx",
     },
 };
-#pragma rodata-name (pop)
 
 static char map[MAP_H][MAP_W];
 static unsigned char hearts_left;
+static unsigned char keys_left, keys_total;
 static unsigned char level;
 static unsigned char state;
 static unsigned char timer;
 static int bx, by, vx, vy;
 static unsigned char dash_timer;
+static unsigned char shake_r, shake_c, shake_timer;
+static unsigned char tele_cooldown, tele_touched;
+static unsigned char movers;
+static unsigned char mover_x[MAX_MOVERS], mover_y[MAX_MOVERS];
+static signed char mover_dir[MAX_MOVERS];
+static unsigned char platforms;
+static unsigned char plat_x[MAX_PLATFORMS], plat_y[MAX_PLATFORMS], plat_speed[MAX_PLATFORMS];
+static unsigned char plat_tr[MAX_PLATFORMS], plat_tc[MAX_PLATFORMS], plat_pr[MAX_PLATFORMS], plat_pc[MAX_PLATFORMS];
 
 static SpriteSlot font;
 static char num_buf[3];
+
+static const char glyph_chars[] = "xhkb^><Lvc";
+#define GLYPH_C 10
+#define GLYPH_TELE 11
+#define GLYPH_PLAT 12
+
+static const unsigned char glyph_start[] = { 0, 7, 14, 21, 23, 25, 27, 29, 31, 33, 38, 43, 52, 54 };
+
+static const unsigned char glyph_rects[] = {
+    3, 0, 1, 7, C_SPIKE,
+    0, 3, 7, 1, C_SPIKE,
+    2, 2, 3, 3, C_SPIKE,
+    1, 1, 1, 1, C_SPIKE,
+    5, 1, 1, 1, C_SPIKE,
+    1, 5, 1, 1, C_SPIKE,
+    5, 5, 1, 1, C_SPIKE,
+
+    1, 1, 2, 1, C_HEART,
+    4, 1, 2, 1, C_HEART,
+    0, 2, 7, 2, C_HEART,
+    1, 4, 5, 1, C_HEART,
+    2, 5, 3, 1, C_HEART,
+    3, 6, 1, 1, C_HEART,
+    1, 2, 1, 1, C_WHITE,
+
+    1, 2, 2, 1, C_KEY,
+    0, 3, 1, 2, C_KEY,
+    3, 3, 1, 2, C_KEY,
+    1, 5, 2, 1, C_KEY,
+    3, 3, 4, 1, C_KEY,
+    4, 4, 1, 1, C_KEY,
+    6, 4, 1, 1, C_KEY,
+
+    0, 0, 7, 7, C_BRICK,
+    1, 3, 5, 1, C_BRICK_DARK,
+
+    0, 0, 7, 7, C_SPRING,
+    2, 1, 3, 2, C_WHITE,
+
+    0, 0, 7, 7, C_ARROW,
+    4, 2, 2, 3, C_WHITE,
+
+    0, 0, 7, 7, C_ARROW,
+    1, 2, 2, 3, C_WHITE,
+
+    0, 0, 7, 7, C_KEY,
+    3, 1, 1, 4, C_BG,
+
+    0, 0, 7, 7, C_PAD,
+    1, 5, 5, 1, C_WHITE,
+
+    0, 0, 7, 7, C_CRUMBLE,
+    1, 1, 1, 1, C_CRACK,
+    4, 2, 1, 1, C_CRACK,
+    2, 4, 1, 1, C_CRACK,
+    5, 5, 1, 1, C_CRACK,
+
+    0, 0, 7, 7, C_CRUMBLE,
+    3, 0, 1, 2, C_CRACK,
+    2, 2, 1, 2, C_CRACK,
+    3, 4, 1, 1, C_CRACK,
+    4, 5, 1, 2, C_CRACK,
+
+    2, 0, 3, 1, C_PAIR,
+    2, 6, 3, 1, C_PAIR,
+    0, 2, 1, 3, C_PAIR,
+    6, 2, 1, 3, C_PAIR,
+    1, 1, 1, 1, C_PAIR,
+    5, 1, 1, 1, C_PAIR,
+    1, 5, 1, 1, C_PAIR,
+    5, 5, 1, 1, C_PAIR,
+    3, 3, 1, 1, C_WHITE,
+
+    0, 0, 7, 7, C_PAIR,
+    1, 1, 5, 1, C_WHITE,
+};
+
+static const unsigned char pair_colors[] = { COL(4, 3, 5), COL(6, 3, 6), COL(3, 3, 6), COL(0, 3, 7) };
+static const unsigned char plat_colors[] = { C_PLAT_SLOW, C_PLAT_MID, C_PLAT_FAST };
+static const char plat_chars[] = "poP";
+#pragma rodata-name (pop)
 
 static void gram_begin() {
     direct_prepare_sprite_ram_array_mode(LEVEL_SLOT);
@@ -226,65 +329,52 @@ static void gram_rect(unsigned char x, unsigned char y, unsigned char w, unsigne
     }
 }
 
-static void draw_tile(unsigned char r, unsigned char c) {
-    unsigned char x = c << 3, y = r << 3;
-    switch (map[r][c]) {
-    case '#':
-        gram_rect(x, y, (c < MAP_W - 1 && map[r][c + 1] == '#') ? 8 : 7, 7, C_STONE);
-        break;
-    case 'x':
-        gram_rect(x + 3, y, 1, 7, C_SPIKE);
-        gram_rect(x, y + 3, 7, 1, C_SPIKE);
-        gram_rect(x + 2, y + 2, 3, 3, C_SPIKE);
-        gram_rect(x + 1, y + 1, 1, 1, C_SPIKE);
-        gram_rect(x + 5, y + 1, 1, 1, C_SPIKE);
-        gram_rect(x + 1, y + 5, 1, 1, C_SPIKE);
-        gram_rect(x + 5, y + 5, 1, 1, C_SPIKE);
-        break;
-    case 'b':
-        gram_rect(x, y, 7, 7, C_BRICK);
-        gram_rect(x + 1, y + 3, 5, 1, C_BRICK_DARK);
-        break;
-    case '^':
-        gram_rect(x, y, 7, 7, C_SPRING);
-        gram_rect(x + 2, y + 1, 3, 2, C_WHITE);
-        break;
-    case '>':
-        gram_rect(x, y, 7, 7, C_ARROW);
-        gram_rect(x + 4, y + 2, 2, 3, C_WHITE);
-        break;
-    case '<':
-        gram_rect(x, y, 7, 7, C_ARROW);
-        gram_rect(x + 1, y + 2, 2, 3, C_WHITE);
-        break;
-    case 'h':
-        gram_rect(x + 1, y + 1, 2, 1, C_HEART);
-        gram_rect(x + 4, y + 1, 2, 1, C_HEART);
-        gram_rect(x, y + 2, 7, 2, C_HEART);
-        gram_rect(x + 1, y + 4, 5, 1, C_HEART);
-        gram_rect(x + 2, y + 5, 3, 1, C_HEART);
-        gram_rect(x + 3, y + 6, 1, 1, C_HEART);
-        gram_rect(x + 1, y + 2, 1, 1, C_WHITE);
-        break;
+#pragma code-name (push, "PROG0")
+#pragma rodata-name (push, "PROG0")
+
+static void draw_glyph(unsigned char g, unsigned char x, unsigned char y, unsigned char pair) {
+    const unsigned char* p = glyph_rects + glyph_start[g] * 5;
+    unsigned char n = glyph_start[g + 1] - glyph_start[g];
+    while (n--) {
+        gram_rect(x + p[0], y + p[1], p[2], p[3], p[4] == C_PAIR ? pair : p[4]);
+        p += 5;
     }
 }
 
-static void clear_tile(unsigned char r, unsigned char c) {
-    map[r][c] = '.';
-    gram_begin();
-    gram_rect(c << 3, r << 3, 8, 8, C_BG);
-    gram_end();
+static void draw_tile(unsigned char r, unsigned char c, unsigned char x) {
+    char t = map[r][c];
+    unsigned char y = r << 3, g;
+    if (t == '#') {
+        gram_rect(x, y, (c < MAP_W - 1 && map[r][c + 1] == '#') ? 8 : 7, 7, C_STONE);
+    } else if (t == 'C') {
+        draw_glyph(GLYPH_C, x, y, 0);
+    } else if (t >= '1' && t <= '4') {
+        draw_glyph(GLYPH_TELE, x, y, pair_colors[t - '1']);
+    } else {
+        for (g = 0; glyph_chars[g]; ++g) {
+            if (glyph_chars[g] == t) {
+                draw_glyph(g, x, y, 0);
+                break;
+            }
+        }
+    }
 }
 
-static void load_level() {
-    unsigned char r, c;
+static void plat_next(unsigned char i);
+static unsigned char plat_hit();
+
+static void load_level_banked() {
+    unsigned char r, c, g;
     char t;
     hearts_left = 0;
+    keys_total = 0;
+    movers = 0;
     vx = 0;
     vy = 0;
     dash_timer = 0;
-    push_rom_bank();
-    change_rom_bank(BANK_PROG0);
+    shake_timer = 0;
+    tele_cooldown = 0;
+    platforms = 0;
     for (r = 0; r < MAP_H; ++r) {
         for (c = 0; c < MAP_W; ++c) {
             t = levels[level][r][c];
@@ -294,19 +384,72 @@ static void load_level() {
                 t = '.';
             } else if (t == 'h') {
                 ++hearts_left;
+            } else if (t == 'k') {
+                ++keys_total;
+            } else if (t == 'm') {
+                if (movers < MAX_MOVERS) {
+                    mover_x[movers] = c << 3;
+                    mover_y[movers] = r << 3;
+                    mover_dir[movers] = 1;
+                    ++movers;
+                }
+                t = '.';
+            } else {
+                for (g = 0; plat_chars[g]; ++g) {
+                    if (plat_chars[g] == t && platforms < MAX_PLATFORMS) {
+                        plat_x[platforms] = c << 3;
+                        plat_y[platforms] = r << 3;
+                        plat_tr[platforms] = plat_pr[platforms] = r;
+                        plat_tc[platforms] = plat_pc[platforms] = c;
+                        plat_speed[platforms] = g;
+                        ++platforms;
+                        t = '=';
+                    }
+                }
             }
             map[r][c] = t;
         }
     }
-    pop_rom_bank();
+    keys_left = keys_total;
     gram_begin();
     for (r = 0; r < MAP_H; ++r) {
         gram_rect(0, r << 3, 128, 8, C_BG);
         for (c = 0; c < MAP_W; ++c) {
-            draw_tile(r, c);
+            draw_tile(r, c, c << 3);
         }
     }
+    gram_rect(0, GLYPH_Y, 48, 8, 0);
+    draw_glyph(0, 0, GLYPH_Y, 0);
+    draw_glyph(1, 8, GLYPH_Y, 0);
+    draw_glyph(2, 16, GLYPH_Y, 0);
+    for (g = 0; g < 3; ++g) draw_glyph(GLYPH_PLAT, 24 + (g << 3), GLYPH_Y, plat_colors[g]);
     gram_end();
+    for (g = 0; g < platforms; ++g) plat_next(g);
+}
+
+#pragma code-name (pop)
+#pragma rodata-name (pop)
+
+static void redraw_tile(unsigned char r, unsigned char c, unsigned char dx) {
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    gram_begin();
+    gram_rect(c << 3, r << 3, 8, 8, C_BG);
+    draw_tile(r, c, (c << 3) + dx);
+    gram_end();
+    pop_rom_bank();
+}
+
+static void clear_tile(unsigned char r, unsigned char c) {
+    map[r][c] = '.';
+    redraw_tile(r, c, 0);
+}
+
+static void load_level() {
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    load_level_banked();
+    pop_rom_bank();
 }
 
 static char tile_at(unsigned char px, unsigned char py) {
@@ -316,14 +459,18 @@ static char tile_at(unsigned char px, unsigned char py) {
 }
 
 static bool is_solid(char t) {
-    return t == '#' || t == 'b' || t == '^' || t == '<' || t == '>';
+    return t == '#' || t == 'b' || t == '^' || t == '<' || t == '>' || t == 'L' || t == 'v' || t == 'c' || t == 'C';
 }
 
 static void bounce_on(unsigned char px, unsigned char py) {
     unsigned char r = py >> 3, c = px >> 3;
+    vy = -BOUNCE;
     switch (map[r][c]) {
     case '^':
         vy = -SUPER_BOUNCE;
+        break;
+    case 'v':
+        vy = -LOW_BOUNCE;
         break;
     case '>':
         vy = 0;
@@ -337,10 +484,18 @@ static void bounce_on(unsigned char px, unsigned char py) {
         break;
     case 'b':
         clear_tile(r, c);
-        vy = -BOUNCE;
         break;
-    default:
-        vy = -BOUNCE;
+    case 'c':
+        if (shake_timer) redraw_tile(shake_r, shake_c, 0);
+        map[r][c] = 'C';
+        shake_r = r;
+        shake_c = c;
+        shake_timer = SHAKE_FRAMES;
+        break;
+    case 'C':
+        if (shake_timer && shake_r == r && shake_c == c) shake_timer = 0;
+        clear_tile(r, c);
+        break;
     }
 }
 
@@ -366,6 +521,12 @@ static void move_x() {
         dash_timer = 0;
     } else if (vx < 0 && (is_solid(tile_at(l, t)) || is_solid(tile_at(l, b)))) {
         bx = (int)((l & 0xF8) + 8) << SUB;
+        vx = 0;
+        dash_timer = 0;
+    }
+    l = plat_hit();
+    if (l != NO_PLATFORM) {
+        bx = (int)(vx > 0 ? plat_x[l] - BALL_SIZE : plat_x[l] + 8) << SUB;
         vx = 0;
         dash_timer = 0;
     }
@@ -403,17 +564,62 @@ static void move_y() {
             vy = 0;
         }
     }
+    l = plat_hit();
+    if (l != NO_PLATFORM) {
+        if (vy > 0) {
+            by = (int)(plat_y[l] - BALL_SIZE) << SUB;
+            vy = -BOUNCE;
+        } else {
+            by = (int)(plat_y[l] + 8) << SUB;
+            vy = 0;
+        }
+    }
+}
+
+static void die() {
+    state = STATE_DEAD;
+    timer = 0;
+}
+
+static void open_locks() {
+    unsigned char r, c;
+    for (r = 0; r < MAP_H; ++r) {
+        for (c = 0; c < MAP_W; ++c) {
+            if (map[r][c] == 'L') clear_tile(r, c);
+        }
+    }
+}
+
+static void teleport(char t, unsigned char r0, unsigned char c0) {
+    unsigned char r, c;
+    for (r = 0; r < MAP_H; ++r) {
+        for (c = 0; c < MAP_W; ++c) {
+            if (map[r][c] == t && (r != r0 || c != c0)) {
+                bx = (int)((c << 3) + 1) << SUB;
+                by = (int)((r << 3) + 1) << SUB;
+                tele_cooldown = 1;
+                return;
+            }
+        }
+    }
 }
 
 static void touch(unsigned char px, unsigned char py) {
     unsigned char r = py >> 3, c = px >> 3;
+    char t;
     if (r >= MAP_H) return;
-    if (map[r][c] == 'h') {
+    t = map[r][c];
+    if (t == 'h') {
         clear_tile(r, c);
         --hearts_left;
-    } else if (map[r][c] == 'x') {
-        state = STATE_DEAD;
-        timer = 0;
+    } else if (t == 'k') {
+        clear_tile(r, c);
+        if (--keys_left == 0) open_locks();
+    } else if (t == 'x') {
+        die();
+    } else if (t >= '1' && t <= '4') {
+        tele_touched = 1;
+        if (!tele_cooldown) teleport(t, r, c);
     }
 }
 
@@ -423,10 +629,108 @@ static void check_touch() {
     r = l + BALL_SIZE - 3;
     t = (by >> SUB) + 1;
     b = t + BALL_SIZE - 3;
+    tele_touched = 0;
     touch(l, t);
     touch(r, t);
     touch(l, b);
     touch(r, b);
+    tele_cooldown = tele_touched;
+}
+
+static void update_movers() {
+    unsigned char i, x, y, l, t;
+    l = bx >> SUB;
+    t = by >> SUB;
+    for (i = 0; i < movers; ++i) {
+        x = mover_x[i];
+        y = mover_y[i];
+        if (timer & 1) {
+            if (mover_dir[i] > 0) {
+                if (x >= 120 || is_solid(tile_at(x + 8, y + 3))) mover_dir[i] = -1;
+                else ++x;
+            } else {
+                if (x == 0 || is_solid(tile_at(x - 1, y + 3))) mover_dir[i] = 1;
+                else --x;
+            }
+            mover_x[i] = x;
+        }
+        if (l + BALL_SIZE > x + 1 && l < x + 6 && t + BALL_SIZE > y + 1 && t < y + 6) die();
+    }
+}
+
+static const signed char step_r[] = { -1, 1, 0, 0 };
+static const signed char step_c[] = { 0, 0, -1, 1 };
+
+static void plat_next(unsigned char i) {
+    unsigned char r = plat_tr[i], c = plat_tc[i], k, nr, nc;
+    for (k = 0; k < 4; ++k) {
+        nr = r + step_r[k];
+        nc = c + step_c[k];
+        if (nr < MAP_H && nc < MAP_W && map[nr][nc] == '=' && (nr != plat_pr[i] || nc != plat_pc[i])) {
+            plat_pr[i] = r;
+            plat_pc[i] = c;
+            plat_tr[i] = nr;
+            plat_tc[i] = nc;
+            return;
+        }
+    }
+    plat_tr[i] = plat_pr[i];
+    plat_tc[i] = plat_pc[i];
+    plat_pr[i] = r;
+    plat_pc[i] = c;
+}
+
+static unsigned char plat_hit() {
+    unsigned char i, l = bx >> SUB, t = by >> SUB;
+    for (i = 0; i < platforms; ++i) {
+        if (l < plat_x[i] + 8 && l + BALL_SIZE > plat_x[i] && t < plat_y[i] + 8 && t + BALL_SIZE > plat_y[i]) return i;
+    }
+    return NO_PLATFORM;
+}
+
+static void move_platforms() {
+    unsigned char i, steps, x, y, tx, ty;
+    signed char dx, dy;
+    for (i = 0; i < platforms; ++i) {
+        x = plat_x[i];
+        y = plat_y[i];
+        dx = dy = 0;
+        steps = plat_speed[i] ? plat_speed[i] : (timer & 1);
+        while (steps--) {
+            tx = plat_tc[i] << 3;
+            ty = plat_tr[i] << 3;
+            if (x == tx && y == ty) {
+                plat_next(i);
+                tx = plat_tc[i] << 3;
+                ty = plat_tr[i] << 3;
+            }
+            dx = tx > x ? 1 : (tx < x ? -1 : 0);
+            dy = ty > y ? 1 : (ty < y ? -1 : 0);
+            x += dx;
+            y += dy;
+        }
+        plat_x[i] = x;
+        plat_y[i] = y;
+        if (plat_hit() == i) {
+            if (dy < 0) {
+                by = (int)(y - BALL_SIZE) << SUB;
+                vy = -BOUNCE;
+            } else if (dy > 0) {
+                by = (int)(y + 8) << SUB;
+                if (vy < 0) vy = 0;
+            } else if (dx > 0) {
+                bx = (int)(x + 8) << SUB;
+            } else if (dx < 0) {
+                bx = (int)(x - BALL_SIZE) << SUB;
+            }
+        }
+    }
+}
+
+static void update_shake() {
+    if (!shake_timer) return;
+    --shake_timer;
+    redraw_tile(shake_r, shake_c, (shake_timer & 2) ? 1 : 0);
 }
 
 static void steer() {
@@ -452,6 +756,7 @@ static void update_play() {
         return;
     }
     steer();
+    move_platforms();
     move_x();
     move_y();
     if ((by >> SUB) >= (MAP_H << 3) - 4) {
@@ -460,7 +765,9 @@ static void update_play() {
         return;
     }
     check_touch();
-    if (state == STATE_PLAY && hearts_left == 0) {
+    update_movers();
+    update_shake();
+    if (state == STATE_PLAY && hearts_left == 0 && keys_left == 0) {
         state = STATE_CLEAR;
         timer = 0;
     }
@@ -490,19 +797,24 @@ static void draw_ball(unsigned char x, unsigned char y) {
 }
 
 static void draw_level() {
+    unsigned char i;
     queue_draw_box(1, 7, SCREEN_WIDTH - 2, PF_Y - 7, C_BG);
     queue_draw_sprite(0, PF_Y, 64, MAP_H << 3, 0, 0, LEVEL_SLOT);
     queue_draw_sprite(64, PF_Y, 64, MAP_H << 3, 64, 0, LEVEL_SLOT);
     draw_text(4, 8, "LEVEL");
     draw_text(52, 8, two_digits(level + 1));
-    queue_draw_box(98, 9, 2, 1, C_HEART);
-    queue_draw_box(101, 9, 2, 1, C_HEART);
-    queue_draw_box(97, 10, 7, 2, C_HEART);
-    queue_draw_box(98, 12, 5, 1, C_HEART);
-    queue_draw_box(99, 13, 3, 1, C_HEART);
-    queue_draw_box(100, 14, 1, 1, C_HEART);
-    queue_draw_box(98, 10, 1, 1, C_WHITE);
+    if (keys_total) {
+        queue_draw_sprite(70, 7, 8, 8, 16, GLYPH_Y, LEVEL_SLOT);
+        draw_text(78, 8, two_digits(keys_left));
+    }
+    queue_draw_sprite(97, 8, 8, 8, 8, GLYPH_Y, LEVEL_SLOT);
     draw_text(108, 8, two_digits(hearts_left));
+    for (i = 0; i < movers; ++i) {
+        queue_draw_sprite(mover_x[i], PF_Y + mover_y[i], 8, 8, 0, GLYPH_Y, LEVEL_SLOT);
+    }
+    for (i = 0; i < platforms; ++i) {
+        queue_draw_sprite(plat_x[i], PF_Y + plat_y[i], 8, 8, 24 + (plat_speed[i] << 3), GLYPH_Y, LEVEL_SLOT);
+    }
 }
 
 static int title_y, title_vy;
