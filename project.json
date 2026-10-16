@@ -1,7 +1,7 @@
 {
     "title" : "Boing Boing!",
     "romname" : "boing.gtr",
-    "progbanks" : 1,
+    "progbanks" : 2,
     "modules" : [
         "PERSIST",
         "RANDOM",

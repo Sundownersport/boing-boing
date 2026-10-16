@@ -12,25 +12,24 @@ const STEPS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
 function glyphs() {
     return {
-        x: [[3, 0, 1, 7, K.C_SPIKE], [0, 3, 7, 1, K.C_SPIKE], [2, 2, 3, 3, K.C_SPIKE], [1, 1, 1, 1, K.C_SPIKE],
-            [5, 1, 1, 1, K.C_SPIKE], [1, 5, 1, 1, K.C_SPIKE], [5, 5, 1, 1, K.C_SPIKE]],
-        h: [[1, 1, 2, 1, K.C_HEART], [4, 1, 2, 1, K.C_HEART], [0, 2, 7, 2, K.C_HEART], [1, 4, 5, 1, K.C_HEART],
-            [2, 5, 3, 1, K.C_HEART], [3, 6, 1, 1, K.C_HEART], [1, 2, 1, 1, K.C_WHITE]],
-        k: [[1, 2, 2, 1, K.C_KEY], [0, 3, 1, 2, K.C_KEY], [3, 3, 1, 2, K.C_KEY], [1, 5, 2, 1, K.C_KEY],
-            [3, 3, 4, 1, K.C_KEY], [4, 4, 1, 1, K.C_KEY], [6, 4, 1, 1, K.C_KEY]],
-        b: [[0, 0, 7, 7, K.C_BRICK], [1, 3, 5, 1, K.C_BRICK_DARK]],
-        '^': [[0, 0, 7, 7, K.C_SPRING], [2, 1, 3, 2, K.C_WHITE]],
-        '>': [[0, 0, 7, 7, K.C_ARROW], [4, 2, 2, 3, K.C_WHITE]],
-        '<': [[0, 0, 7, 7, K.C_ARROW], [1, 2, 2, 3, K.C_WHITE]],
-        L: [[0, 0, 7, 7, K.C_KEY], [3, 1, 1, 4, K.C_BG]],
-        v: [[0, 0, 7, 7, K.C_PAD], [1, 5, 5, 1, K.C_WHITE]],
-        c: [[0, 0, 7, 7, K.C_CRUMBLE], [1, 1, 1, 1, K.C_CRACK], [4, 2, 1, 1, K.C_CRACK], [2, 4, 1, 1, K.C_CRACK],
-            [5, 5, 1, 1, K.C_CRACK]],
-        C: [[0, 0, 7, 7, K.C_CRUMBLE], [3, 0, 1, 2, K.C_CRACK], [2, 2, 1, 2, K.C_CRACK], [3, 4, 1, 1, K.C_CRACK],
-            [4, 5, 1, 2, K.C_CRACK]],
-        tele: [[2, 0, 3, 1, PAIR], [2, 6, 3, 1, PAIR], [0, 2, 1, 3, PAIR], [6, 2, 1, 3, PAIR], [1, 1, 1, 1, PAIR],
-            [5, 1, 1, 1, PAIR], [1, 5, 1, 1, PAIR], [5, 5, 1, 1, PAIR], [3, 3, 1, 1, K.C_WHITE]],
-        plat: [[0, 0, 7, 7, PAIR], [1, 1, 5, 1, K.C_WHITE]],
+        x: [[2, 0, 1, 5, K.C_SPIKE], [0, 2, 5, 1, K.C_SPIKE], [1, 1, 3, 3, K.C_SPIKE], [0, 0, 1, 1, K.C_SPIKE],
+            [4, 0, 1, 1, K.C_SPIKE], [0, 4, 1, 1, K.C_SPIKE], [4, 4, 1, 1, K.C_SPIKE]],
+        h: [[1, 0, 1, 1, K.C_HEART], [3, 0, 1, 1, K.C_HEART], [0, 1, 5, 2, K.C_HEART], [1, 3, 3, 1, K.C_HEART],
+            [2, 4, 1, 1, K.C_HEART], [1, 1, 1, 1, K.C_WHITE]],
+        k: [[0, 1, 2, 1, K.C_KEY], [0, 2, 1, 1, K.C_KEY], [0, 3, 2, 1, K.C_KEY], [2, 2, 3, 1, K.C_KEY],
+            [3, 3, 1, 1, K.C_KEY]],
+        b: [[0, 0, 5, 5, K.C_BRICK], [1, 2, 3, 1, K.C_BRICK_DARK]],
+        '^': [[0, 0, 5, 5, K.C_SPRING], [1, 1, 3, 1, K.C_WHITE]],
+        '>': [[0, 0, 5, 5, K.C_ARROW], [3, 1, 1, 3, K.C_WHITE]],
+        '<': [[0, 0, 5, 5, K.C_ARROW], [1, 1, 1, 3, K.C_WHITE]],
+        L: [[0, 0, 5, 5, K.C_KEY], [2, 1, 1, 3, K.C_BG]],
+        v: [[0, 0, 5, 5, K.C_PAD], [1, 3, 3, 1, K.C_WHITE]],
+        c: [[0, 0, 5, 5, K.C_CRUMBLE], [1, 1, 1, 1, K.C_CRACK], [3, 2, 1, 1, K.C_CRACK], [1, 3, 1, 1, K.C_CRACK],
+            [3, 4, 1, 1, K.C_CRACK]],
+        C: [[0, 0, 5, 5, K.C_CRUMBLE], [2, 0, 1, 2, K.C_CRACK], [1, 2, 1, 1, K.C_CRACK], [2, 3, 1, 1, K.C_CRACK],
+            [3, 4, 1, 1, K.C_CRACK]],
+        tele: [[1, 0, 3, 1, PAIR], [1, 4, 3, 1, PAIR], [0, 1, 1, 3, PAIR], [4, 1, 1, 3, PAIR], [2, 2, 1, 1, K.C_WHITE]],
+        plat: [[0, 0, 5, 5, PAIR], [1, 1, 3, 1, K.C_WHITE]],
     };
 }
 
@@ -58,9 +57,9 @@ function isTele(t) {
     return t >= '1' && t <= '4';
 }
 
-function drawTile(g, m, r, c, x = c << 3, y = r << 3) {
+function drawTile(g, m, r, c, x = c * K.TILE, y = r * K.TILE) {
     const t = m[r][c];
-    if (t === '#') rect(g, x, y, (c < K.MAP_W - 1 && m[r][c + 1] === '#') ? 8 : 7, 7, K.C_STONE);
+    if (t === '#') rect(g, x, y, (c < K.MAP_W - 1 && m[r][c + 1] === '#') ? K.TILE : K.TILE - 1, K.TILE - 1, K.C_STONE);
     else if (isTele(t)) drawGlyph(g, 'tele', x, y, pairColors()[t.charCodeAt(0) - 49]);
     else if (glyphs()[t]) drawGlyph(g, t, x, y, 0);
 }
@@ -78,7 +77,7 @@ function levelMap(n) {
 function renderGram(m) {
     const g = new Uint8Array(128 * 128);
     for (let r = 0; r < K.MAP_H; ++r) {
-        rect(g, 0, r << 3, 128, 8, K.C_BG);
+        rect(g, 0, r * K.TILE, K.PF_W, K.TILE, K.C_BG);
         for (let c = 0; c < K.MAP_W; ++c) drawTile(g, m, r, c);
     }
     drawGlyph(g, 'x', 0, GLYPH_Y, 0);
@@ -106,8 +105,8 @@ function loadLevel() {
     movers = [];
     platforms = [];
     const s = startPos(map);
-    bx = ((s.c << 3) + 1) << K.SUB;
-    by = ((s.r << 3) + 2) << K.SUB;
+    bx = (s.c * K.TILE + 1) << K.SUB;
+    by = (s.r * K.TILE + K.TILE - K.BALL_SIZE) << K.SUB;
     map.forEach((row, r) => {
         for (let c = 0; c < row.length; ++c) {
             const t = row[c];
@@ -115,11 +114,11 @@ function loadLevel() {
             else if (t === 'h') ++hearts;
             else if (t === 'k') ++keysTotal;
             else if (t === 'm') {
-                if (movers.length < K.MAX_MOVERS) movers.push({ x: c << 3, y: r << 3, dir: 1 });
+                if (movers.length < K.MAX_MOVERS) movers.push({ x: c * K.TILE, y: r * K.TILE, dir: 1 });
                 row[c] = '.';
             } else if (PLAT_CHARS.includes(t)) {
                 if (platforms.length < K.MAX_PLATFORMS) {
-                    platforms.push({ x: c << 3, y: r << 3, speed: PLAT_CHARS.indexOf(t), tr: r, tc: c, pr: r, pc: c });
+                    platforms.push({ x: c * K.TILE, y: r * K.TILE, speed: PLAT_CHARS.indexOf(t), tr: r, tc: c, pr: r, pc: c });
                 }
                 row[c] = '=';
             }
@@ -133,8 +132,8 @@ function loadLevel() {
 }
 
 function redrawTile(r, c, dx) {
-    rect(gram, c << 3, r << 3, 8, 8, K.C_BG);
-    drawTile(gram, map, r, c, (c << 3) + dx, r << 3);
+    rect(gram, c * K.TILE, r * K.TILE, K.TILE, K.TILE, K.C_BG);
+    drawTile(gram, map, r, c, c * K.TILE + dx, r * K.TILE);
 }
 
 function clearTile(r, c) {
@@ -142,10 +141,18 @@ function clearTile(r, c) {
     redrawTile(r, c, 0);
 }
 
+function pxTile(p) {
+    return Math.floor((p & 255) / K.TILE);
+}
+
+function tileStart(p) {
+    return pxTile(p) * K.TILE;
+}
+
 function tileAt(px, py) {
-    py = (py & 255) >> 3;
+    py = pxTile(py);
     if (py >= K.MAP_H) return '.';
-    return map[py][(px & 255) >> 3];
+    return map[py][pxTile(px)];
 }
 
 function isSolid(t) {
@@ -153,7 +160,7 @@ function isSolid(t) {
 }
 
 function bounceOn(px, py) {
-    const r = py >> 3, c = px >> 3;
+    const r = pxTile(py), c = pxTile(px);
     vy = -K.BOUNCE;
     switch (map[r][c]) {
     case '^': vy = -K.SUPER_BOUNCE; break;
@@ -181,13 +188,13 @@ function moveX() {
     const l = (bx >> K.SUB) & 255, r = (l + B - 1) & 255;
     const t = (by >> K.SUB) & 255, b = (t + B - 1) & 255;
     if (vx > 0 && (isSolid(tileAt(r, t)) || isSolid(tileAt(r, b)))) {
-        bx = ((r & 0xF8) - B) << K.SUB; vx = 0; dash = 0;
+        bx = (tileStart(r) - B) << K.SUB; vx = 0; dash = 0;
     } else if (vx < 0 && (isSolid(tileAt(l, t)) || isSolid(tileAt(l, b)))) {
-        bx = ((l & 0xF8) + 8) << K.SUB; vx = 0; dash = 0;
+        bx = (tileStart(l) + K.TILE) << K.SUB; vx = 0; dash = 0;
     }
     const p = platHit();
     if (p) {
-        bx = (vx > 0 ? p.x - B : p.x + 8) << K.SUB;
+        bx = (vx > 0 ? p.x - B : p.x + K.TILE) << K.SUB;
         vx = 0; dash = 0;
     }
 }
@@ -202,7 +209,7 @@ function moveY() {
     const t = (by >> K.SUB) & 255, b = (t + B - 1) & 255;
     if (vy > 0) {
         if (isSolid(tileAt(l, b)) || isSolid(tileAt(r, b))) {
-            by = ((b & 0xF8) - B) << K.SUB;
+            by = (tileStart(b) - B) << K.SUB;
             const mid = l + (B >> 1);
             if (isSolid(tileAt(mid, b))) bounceOn(mid, b);
             else if (isSolid(tileAt(l, b))) bounceOn(l, b);
@@ -210,13 +217,13 @@ function moveY() {
         }
     } else if (vy < 0) {
         if (isSolid(tileAt(l, t)) || isSolid(tileAt(r, t))) {
-            by = ((t & 0xF8) + 8) << K.SUB; vy = 0;
+            by = (tileStart(t) + K.TILE) << K.SUB; vy = 0;
         }
     }
     const p = platHit();
     if (p) {
         if (vy > 0) { by = (p.y - B) << K.SUB; vy = -K.BOUNCE; }
-        else { by = (p.y + 8) << K.SUB; vy = 0; }
+        else { by = (p.y + K.TILE) << K.SUB; vy = 0; }
     }
 }
 
@@ -233,7 +240,7 @@ function platNext(p) {
 
 function platHit() {
     const l = (bx >> K.SUB) & 255, t = (by >> K.SUB) & 255, B = K.BALL_SIZE;
-    return platforms.find(p => l < p.x + 8 && l + B > p.x && t < p.y + 8 && t + B > p.y);
+    return platforms.find(p => l < p.x + K.TILE && l + B > p.x && t < p.y + K.TILE && t + B > p.y);
 }
 
 function movePlatforms() {
@@ -241,8 +248,8 @@ function movePlatforms() {
         let dx = 0, dy = 0;
         let steps = p.speed ? p.speed : (timer & 1);
         while (steps--) {
-            if (p.x === p.tc << 3 && p.y === p.tr << 3) platNext(p);
-            const tx = p.tc << 3, ty = p.tr << 3;
+            if (p.x === p.tc * K.TILE && p.y === p.tr * K.TILE) platNext(p);
+            const tx = p.tc * K.TILE, ty = p.tr * K.TILE;
             dx = Math.sign(tx - p.x);
             dy = Math.sign(ty - p.y);
             p.x += dx;
@@ -250,8 +257,8 @@ function movePlatforms() {
         }
         if (platHit() === p) {
             if (dy < 0) { by = (p.y - K.BALL_SIZE) << K.SUB; vy = -K.BOUNCE; }
-            else if (dy > 0) { by = (p.y + 8) << K.SUB; if (vy < 0) vy = 0; }
-            else if (dx > 0) bx = (p.x + 8) << K.SUB;
+            else if (dy > 0) { by = (p.y + K.TILE) << K.SUB; if (vy < 0) vy = 0; }
+            else if (dx > 0) bx = (p.x + K.TILE) << K.SUB;
             else if (dx < 0) bx = (p.x - K.BALL_SIZE) << K.SUB;
         }
     }
@@ -270,8 +277,8 @@ function teleport(t, r0, c0) {
     for (let r = 0; r < K.MAP_H; ++r) {
         for (let c = 0; c < K.MAP_W; ++c) {
             if (map[r][c] === t && (r !== r0 || c !== c0)) {
-                bx = ((c << 3) + 1) << K.SUB;
-                by = ((r << 3) + 1) << K.SUB;
+                bx = (c * K.TILE + 1) << K.SUB;
+                by = (r * K.TILE + K.TILE - K.BALL_SIZE) << K.SUB;
                 teleCooldown = true;
                 return;
             }
@@ -280,7 +287,7 @@ function teleport(t, r0, c0) {
 }
 
 function touch(px, py) {
-    const r = (py & 255) >> 3, c = (px & 255) >> 3;
+    const r = pxTile(py), c = pxTile(px);
     if (r >= K.MAP_H) return;
     const t = map[r][c];
     if (t === 'h') { clearTile(r, c); --hearts; }
@@ -302,12 +309,12 @@ function updateMovers() {
     for (const m of movers) {
         if (timer & 1) {
             if (m.dir > 0) {
-                if (m.x >= 120 || isSolid(tileAt(m.x + 8, m.y + 3))) m.dir = -1;
+                if (m.x >= K.PF_W - K.TILE || isSolid(tileAt(m.x + K.TILE, m.y + (K.TILE >> 1)))) m.dir = -1;
                 else ++m.x;
-            } else if (m.x === 0 || isSolid(tileAt(m.x - 1, m.y + 3))) m.dir = 1;
+            } else if (m.x === 0 || isSolid(tileAt(m.x - 1, m.y + (K.TILE >> 1)))) m.dir = 1;
             else --m.x;
         }
-        if (l + B > m.x + 1 && l < m.x + 6 && t + B > m.y + 1 && t < m.y + 6) die();
+        if (l + B > m.x + 1 && l < m.x + K.TILE - 2 && t + B > m.y + 1 && t < m.y + K.TILE - 2) die();
     }
 }
 
@@ -339,27 +346,28 @@ function two(n) {
 
 function drawLevel(gt, g, n, heartCount, keyCount, keyTotal, moverList, platList) {
     gt.box(1, 7, 126, K.PF_Y - 7, K.C_BG);
-    gt.blit(g, 128, 0, K.PF_Y, 0, 0, 128, K.MAP_H * 8);
+    gt.box(1, K.PF_Y + K.PF_H, 126, 120 - K.PF_Y - K.PF_H, K.C_BG);
+    gt.blit(g, 128, K.PF_X, K.PF_Y, 0, 0, K.PF_W, K.PF_H);
     gt.text(4, 8, 'LEVEL');
     gt.text(52, 8, two(n + 1));
     if (keyTotal) {
-        gt.blit(g, 128, 70, 7, 16, GLYPH_Y, 8, 8);
+        gt.blit(g, 128, 71, 9, 16, GLYPH_Y, K.TILE, K.TILE);
         gt.text(78, 8, two(keyCount));
     }
-    gt.blit(g, 128, 97, 8, 8, GLYPH_Y, 8, 8);
+    gt.blit(g, 128, 99, 9, 8, GLYPH_Y, K.TILE, K.TILE);
     gt.text(108, 8, two(heartCount));
-    for (const m of moverList) gt.blit(g, 128, m.x, K.PF_Y + m.y, 0, GLYPH_Y, 8, 8);
-    for (const p of platList) gt.blit(g, 128, p.x, K.PF_Y + p.y, 24 + p.speed * 8, GLYPH_Y, 8, 8);
+    for (const m of moverList) gt.blit(g, 128, K.PF_X + m.x, K.PF_Y + m.y, 0, GLYPH_Y, K.TILE, K.TILE);
+    for (const p of platList) gt.blit(g, 128, K.PF_X + p.x, K.PF_Y + p.y, 24 + p.speed * 8, GLYPH_Y, K.TILE, K.TILE);
 }
 
 function drawTrack(gt, m) {
     m.forEach((row, r) => row.forEach((t, c) => {
         if (t !== '=') return;
-        const x = c << 3, y = K.PF_Y + (r << 3);
-        gt.box(x + 3, y + 3, 2, 2, K.C_TRACK);
+        const x = K.PF_X + c * K.TILE, y = K.PF_Y + r * K.TILE;
+        gt.box(x + 2, y + 2, 2, 2, K.C_TRACK);
         for (const [dr, dc] of STEPS) {
             const n = m[r + dr] && m[r + dr][c + dc];
-            if (n === '=') gt.box(x + 3 + dc * 3, y + 3 + dr * 3, 2, 2, K.C_TRACK);
+            if (n === '=') gt.box(x + 2 + dc * 2, y + 2 + dr * 2, 2, 2, K.C_TRACK);
         }
     }));
 }
@@ -376,7 +384,8 @@ const TILES = '.#b^><xhSkLvcm1234=poP';
 GameTank.defineGame({
     source: 'src/main.c',
     requires: ['C_BG', 'C_STONE', 'C_BRICK', 'C_BRICK_DARK', 'C_SPRING', 'C_ARROW', 'C_SPIKE', 'C_HEART', 'C_KEY',
-        'C_PAD', 'C_CRUMBLE', 'C_CRACK', 'C_WHITE', 'MAP_W', 'MAP_H', 'PF_Y', 'BALL_SIZE', 'SUB',
+        'C_PAD', 'C_CRUMBLE', 'C_CRACK', 'C_WHITE', 'TILE', 'MAP_W', 'MAP_H', 'PF_W', 'PF_H', 'PF_X', 'PF_Y',
+        'BALL_SIZE', 'SUB',
         'MAX_BX', 'GRAVITY', 'MAX_FALL', 'BOUNCE', 'SUPER_BOUNCE', 'LOW_BOUNCE', 'ACCEL', 'FRICTION', 'MAX_VX',
         'DASH_SPEED', 'DASH_FRAMES', 'SHAKE_FRAMES', 'MAX_MOVERS', 'C_PLAT_SLOW', 'C_PLAT_MID', 'C_PLAT_FAST',
         'MAX_PLATFORMS'],
@@ -437,7 +446,7 @@ GameTank.defineGame({
             movePlatforms();
             moveX();
             moveY();
-            if ((by >> K.SUB) >= (K.MAP_H << 3) - 4) { die(); break; }
+            if ((by >> K.SUB) >= K.PF_H - 3) { die(); break; }
             checkTouch();
             updateMovers();
             updateShake();
@@ -459,7 +468,7 @@ GameTank.defineGame({
     },
 
     draw(gt) {
-        const ball = () => drawBall(gt, bx >> K.SUB, K.PF_Y + (by >> K.SUB));
+        const ball = () => drawBall(gt, K.PF_X + (bx >> K.SUB), K.PF_Y + (by >> K.SUB));
         const scene = () => drawLevel(gt, gram, level, hearts, keysLeft, keysTotal, movers, platforms);
         switch (state) {
         case PLAY:
@@ -495,24 +504,24 @@ GameTank.defineGame({
                 if (row[c] === 'S') row[c] = '.';
                 else if (row[c] === 'h') ++heartCount;
                 else if (row[c] === 'k') ++keyCount;
-                else if (row[c] === 'm') { moverList.push({ x: c << 3, y: r << 3 }); row[c] = '.'; }
-                else if (PLAT_CHARS.includes(row[c])) { platList.push({ x: c << 3, y: r << 3, speed: PLAT_CHARS.indexOf(row[c]) }); row[c] = '='; }
+                else if (row[c] === 'm') { moverList.push({ x: c * K.TILE, y: r * K.TILE }); row[c] = '.'; }
+                else if (PLAT_CHARS.includes(row[c])) { platList.push({ x: c * K.TILE, y: r * K.TILE, speed: PLAT_CHARS.indexOf(row[c]) }); row[c] = '='; }
             }
         });
         gt.clear(K.C_BG);
         const g = renderGram(m);
         drawLevel(gt, g, n, heartCount, keyCount, keyCount, moverList, []);
         drawTrack(gt, m);
-        for (const p of platList) gt.blit(g, 128, p.x, K.PF_Y + p.y, 24 + p.speed * 8, GLYPH_Y, 8, 8);
-        drawBall(gt, (s.c << 3) + 1, K.PF_Y + (s.r << 3) + 2);
+        for (const p of platList) gt.blit(g, 128, K.PF_X + p.x, K.PF_Y + p.y, 24 + p.speed * 8, GLYPH_Y, K.TILE, K.TILE);
+        drawBall(gt, K.PF_X + s.c * K.TILE + 1, K.PF_Y + s.r * K.TILE + K.TILE - K.BALL_SIZE);
         border(gt);
     },
 
     editor: {
-        x: 0,
+        x: () => K.PF_X,
         y: () => K.PF_Y,
-        cellW: 8,
-        cellH: 8,
+        cellW: () => K.TILE,
+        cellH: () => K.TILE,
         empty: '.',
         unique: ['S'],
         tiles: [
@@ -540,18 +549,18 @@ GameTank.defineGame({
             { ch: 'S', name: 'Start' },
         ],
         drawTile(gt, ch) {
-            gt.box(0, 0, 8, 8, K.C_BG);
-            if (ch === 'S') { drawBall(gt, 1, 1); return; }
-            if (ch === '=') { gt.box(0, 3, 8, 2, K.C_TRACK); return; }
+            gt.box(0, 0, K.TILE, K.TILE, K.C_BG);
+            if (ch === 'S') { drawBall(gt, 1, K.TILE - K.BALL_SIZE); return; }
+            if (ch === '=') { gt.box(0, 2, K.TILE, 2, K.C_TRACK); return; }
             if (PLAT_CHARS.includes(ch)) {
                 const g = new Uint8Array(128 * 128);
                 drawGlyph(g, 'plat', 0, 0, platColors()[PLAT_CHARS.indexOf(ch)]);
-                gt.blit(g, 128, 0, 0, 0, 0, 8, 8);
+                gt.blit(g, 128, 0, 0, 0, 0, K.TILE, K.TILE);
                 return;
             }
             const g = new Uint8Array(128 * 128);
             drawTile(g, [[ch === 'm' ? 'x' : ch]], 0, 0);
-            gt.blit(g, 128, 0, 0, 0, 0, 8, 8);
+            gt.blit(g, 128, 0, 0, 0, 0, K.TILE, K.TILE);
         },
     },
 });
