@@ -528,7 +528,7 @@ static char map[MAP_H][MAP_W];
 static unsigned char hearts_left;
 static unsigned char keys_left, keys_total;
 static unsigned char level;
-static unsigned char start_level, best_level, repeat_timer;
+static unsigned char start_level, best_level, repeat_timer, cheat_pos;
 static unsigned char state;
 static unsigned char timer;
 static int bx, by, vx, vy;
@@ -1155,7 +1155,29 @@ static void update_play_banked() {
     }
 }
 
+static const int cheat_code[] = {
+    INPUT_MASK_UP, INPUT_MASK_UP, INPUT_MASK_DOWN, INPUT_MASK_DOWN,
+    INPUT_MASK_UP, INPUT_MASK_UP, INPUT_MASK_UP,
+    INPUT_MASK_DOWN, INPUT_MASK_DOWN, INPUT_MASK_DOWN,
+    INPUT_MASK_A, INPUT_MASK_B, INPUT_MASK_C,
+    INPUT_MASK_A, INPUT_MASK_B, INPUT_MASK_C
+};
+
+static void check_cheat() {
+    if (!player1_new_buttons) return;
+    if (player1_new_buttons & cheat_code[cheat_pos]) {
+        if (++cheat_pos == sizeof(cheat_code) / sizeof(cheat_code[0])) {
+            cheat_pos = 0;
+            best_level = NUM_LEVELS - 1;
+            SFX(clear, 3, 3);
+        }
+    } else {
+        cheat_pos = (player1_new_buttons & cheat_code[0]) ? 1 : 0;
+    }
+}
+
 static void pick_level_banked() {
+    check_cheat();
     if (player1_new_buttons & (INPUT_MASK_LEFT | INPUT_MASK_RIGHT)) {
         repeat_timer = 20;
     } else if (!(player1_buttons & (INPUT_MASK_LEFT | INPUT_MASK_RIGHT)) || --repeat_timer) {
@@ -1286,7 +1308,7 @@ void main() {
 
         switch (state) {
         case STATE_TITLE:
-            if (player1_new_buttons & (INPUT_MASK_START | INPUT_MASK_A)) {
+            if ((player1_new_buttons & INPUT_MASK_START) || ((player1_new_buttons & INPUT_MASK_A) && !cheat_pos)) {
                 level = start_level;
                 load_level();
                 state = STATE_PLAY;
