@@ -3,6 +3,7 @@
 #include "gt/gfx/draw_queue.h"
 #include "gt/gfx/draw_direct.h"
 #include "gt/feature/text/text.h"
+#include "gt/feature/persist/persist.h"
 #include "gt/banking.h"
 #include "gen/bank_nums.h"
 #include "gt/audio/audio_coprocessor.h"
@@ -11,6 +12,7 @@
 #define COL(h, s, l) (((h) << 5) | ((s) << 3) | (l))
 
 #define C_BG         COL(5, 1, 1)
+#define C_HUD        COL(0, 0, 0)
 #define C_STONE      COL(0, 0, 4)
 #define C_BRICK      COL(1, 2, 3)
 #define C_BRICK_DARK COL(1, 2, 1)
@@ -492,8 +494,32 @@ static const char levels[][MAP_H][MAP_W + 1] = {
         "ooo============....LL",
         "xxxxxxxxxxxxxxxxxxxxh",
     },
+    // Level 21
+    {
+        ".....................",
+        ".....................",
+        "k...............=pppp",
+        "..x.....#......x.....",
+        "..x.....x===ppp......",
+        "b.......#......==pp==",
+        "........#......x.....",
+        "....pp===......x.....",
+        "...............x===pp",
+        "===pp..........x.....",
+        "...............x.....",
+        "...............xpp===",
+        "...............x.....",
+        "...............x.LLLL",
+        "..S.x..x...x...x.Lh..",
+        "....x..x...x^..x.L...",
+        "#####################",
+    },
 };
 
+#pragma rodata-name (pop)
+
+#pragma rodata-name (push, "SAVE")
+static const unsigned char saved_best = 0;
 #pragma rodata-name (pop)
 
 #define NUM_LEVELS (sizeof(levels) / sizeof(levels[0]))
@@ -502,6 +528,7 @@ static char map[MAP_H][MAP_W];
 static unsigned char hearts_left;
 static unsigned char keys_left, keys_total;
 static unsigned char level;
+static unsigned char start_level, best_level, repeat_timer;
 static unsigned char state;
 static unsigned char timer;
 static int bx, by, vx, vy;
@@ -1128,8 +1155,50 @@ static void update_play_banked() {
     }
 }
 
+static void pick_level_banked() {
+    if (player1_new_buttons & (INPUT_MASK_LEFT | INPUT_MASK_RIGHT)) {
+        repeat_timer = 20;
+    } else if (!(player1_buttons & (INPUT_MASK_LEFT | INPUT_MASK_RIGHT)) || --repeat_timer) {
+        return;
+    } else {
+        repeat_timer = 5;
+    }
+    if (player1_buttons & INPUT_MASK_LEFT) {
+        if (start_level) --start_level;
+    } else if (start_level < best_level) {
+        ++start_level;
+    }
+}
+
+static void save_progress_banked() {
+    clear_save_sector();
+    save_write(&best_level, (void*) &saved_best, 1);
+}
+
 #pragma code-name (pop)
 #pragma rodata-name (pop)
+
+static void pick_level() {
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    pick_level_banked();
+    pop_rom_bank();
+}
+
+static void save_progress() {
+    push_rom_bank();
+    change_rom_bank(BANK_PROG0);
+    save_progress_banked();
+    pop_rom_bank();
+}
+
+static void load_progress() {
+    push_rom_bank();
+    change_rom_bank(BANK_SAVE);
+    best_level = *(volatile const unsigned char*) &saved_best;
+    pop_rom_bank();
+    if (best_level >= NUM_LEVELS) best_level = 0;
+}
 
 static void update_play() {
     push_rom_bank();
@@ -1163,8 +1232,8 @@ static void draw_ball(unsigned char x, unsigned char y) {
 
 static void draw_level() {
     unsigned char i;
-    queue_draw_box(1, 7, SCREEN_WIDTH - 2, PF_Y - 7, C_BG);
-    queue_draw_box(1, PF_Y + PF_H, SCREEN_WIDTH - 2, 120 - PF_Y - PF_H, C_BG);
+    queue_draw_box(1, 7, SCREEN_WIDTH - 2, PF_Y - 7, C_HUD);
+    queue_draw_box(1, PF_Y + PF_H, SCREEN_WIDTH - 2, 120 - PF_Y - PF_H, C_HUD);
     queue_draw_sprite(PF_X, PF_Y, 64, PF_H, 0, 0, LEVEL_SLOT);
     queue_draw_sprite(PF_X + 64, PF_Y, PF_W - 64, PF_H, 64, 0, LEVEL_SLOT);
     draw_text(4, 8, "LEVEL");
@@ -1196,10 +1265,16 @@ static void draw_title() {
     queue_draw_box(40, 102, 48, 7, C_STONE);
     draw_ball(61, title_y >> SUB);
     if (timer & 32) draw_text(20, 64, "PRESS START");
+    draw_text(32, 48, "LEVEL");
+    draw_text(80, 48, two_digits(start_level + 1));
+    if (start_level) draw_text(16, 48, "<");
+    if (start_level < best_level) draw_text(104, 48, ">");
 }
 
 void main() {
     font = text_load_font();
+    load_progress();
+    start_level = best_level;
     state = STATE_TITLE;
     title_y = 60 << SUB;
     title_vy = 0;
@@ -1212,9 +1287,11 @@ void main() {
         switch (state) {
         case STATE_TITLE:
             if (player1_new_buttons & (INPUT_MASK_START | INPUT_MASK_A)) {
-                level = 0;
+                level = start_level;
                 load_level();
                 state = STATE_PLAY;
+            } else {
+                pick_level();
             }
             break;
         case STATE_PLAY:
@@ -1233,6 +1310,11 @@ void main() {
                     state = STATE_WIN;
                     SFX(win, 3, 3);
                 } else {
+                    if (level > best_level) {
+                        best_level = level;
+                        start_level = level;
+                        save_progress();
+                    }
                     load_level();
                     state = STATE_PLAY;
                 }

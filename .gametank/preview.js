@@ -345,8 +345,8 @@ function two(n) {
 }
 
 function drawLevel(gt, g, n, heartCount, keyCount, keyTotal, moverList, platList) {
-    gt.box(1, 7, 126, K.PF_Y - 7, K.C_BG);
-    gt.box(1, K.PF_Y + K.PF_H, 126, 120 - K.PF_Y - K.PF_H, K.C_BG);
+    gt.box(1, 7, 126, K.PF_Y - 7, K.C_HUD);
+    gt.box(1, K.PF_Y + K.PF_H, 126, 120 - K.PF_Y - K.PF_H, K.C_HUD);
     gt.blit(g, 128, K.PF_X, K.PF_Y, 0, 0, K.PF_W, K.PF_H);
     gt.text(4, 8, 'LEVEL');
     gt.text(52, 8, two(n + 1));
@@ -383,7 +383,7 @@ const TILES = '.#b^><xhSkLvcm1234=poP';
 
 GameTank.defineGame({
     source: 'src/main.c',
-    requires: ['C_BG', 'C_STONE', 'C_BRICK', 'C_BRICK_DARK', 'C_SPRING', 'C_ARROW', 'C_SPIKE', 'C_HEART', 'C_KEY',
+    requires: ['C_BG', 'C_HUD', 'C_STONE', 'C_BRICK', 'C_BRICK_DARK', 'C_SPRING', 'C_ARROW', 'C_SPIKE', 'C_HEART', 'C_KEY',
         'C_PAD', 'C_CRUMBLE', 'C_CRACK', 'C_WHITE', 'TILE', 'MAP_W', 'MAP_H', 'PF_W', 'PF_H', 'PF_X', 'PF_Y',
         'BALL_SIZE', 'SUB',
         'MAX_BX', 'GRAVITY', 'MAX_FALL', 'BOUNCE', 'SUPER_BOUNCE', 'LOW_BOUNCE', 'ACCEL', 'FRICTION', 'MAX_VX',
