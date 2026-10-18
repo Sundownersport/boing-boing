@@ -6,7 +6,7 @@ const PAIR = 1;
 const GLYPH_Y = 104;
 
 let K, levels, level, map, gram, hearts, keysLeft, keysTotal, state, timer, bx, by, vx, vy, dash;
-let shake, teleCooldown, teleTouched, movers, platforms;
+let shake, teleCooldown, teleTouched, movers, platforms, stoneChars, stoneColors;
 const PLAT_CHARS = 'poP';
 const STEPS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
@@ -53,13 +53,19 @@ function drawGlyph(g, name, x, y, pair) {
     for (const [gx, gy, w, h, c] of glyphs()[name]) rect(g, x + gx, y + gy, w, h, c === PAIR ? pair : c);
 }
 
+function stoneIndex(t) {
+    const i = stoneChars.indexOf(t);
+    return i < stoneColors.length ? i : -1;
+}
+
 function isTele(t) {
     return t >= '1' && t <= '4';
 }
 
 function drawTile(g, m, r, c, x = c * K.TILE, y = r * K.TILE) {
     const t = m[r][c];
-    if (t === '#') rect(g, x, y, (c < K.MAP_W - 1 && m[r][c + 1] === '#') ? K.TILE : K.TILE - 1, K.TILE - 1, K.C_STONE);
+    const s = stoneIndex(t);
+    if (s >= 0) rect(g, x, y, (c < K.MAP_W - 1 && m[r][c + 1] === t) ? K.TILE : K.TILE - 1, K.TILE - 1, stoneColors[s]);
     else if (isTele(t)) drawGlyph(g, 'tele', x, y, pairColors()[t.charCodeAt(0) - 49]);
     else if (glyphs()[t]) drawGlyph(g, t, x, y, 0);
 }
@@ -156,7 +162,7 @@ function tileAt(px, py) {
 }
 
 function isSolid(t) {
-    return '#b^<>LvcC'.includes(t);
+    return (t >= 'A' && t <= 'Z' && t !== 'P') || '#b^<>vc'.includes(t);
 }
 
 function bounceOn(px, py) {
@@ -392,13 +398,17 @@ GameTank.defineGame({
 
     load(gt) {
         K = { ...gt.defines, COL: (h, s, l) => gt.color(h, s, l), C_TRACK: gt.color(5, 1, 4) };
+        const chars = gt.source.text.match(/\bstone_chars\[\]\s*=\s*"([^"]*)"/);
+        stoneChars = chars ? chars[1] : '#';
+        stoneColors = gt.array('stone_colors').map(e => e.value);
+        if (stoneColors.length > stoneChars.length) gt.problem(`stone_colors has ${stoneColors.length} entries but stone_chars only ${stoneChars.length} letters`);
         levels = gt.table('levels');
         levels.forEach((l, n) => {
             const name = `Level ${n + 1}`;
             if (l.rows.length !== K.MAP_H) gt.problem(`${name}: ${l.rows.length} rows, expected ${K.MAP_H}`);
             for (const r of l.rows) {
                 if (r.text.length !== K.MAP_W) gt.problem(`${name}, line ${r.line + 1}: ${r.text.length} chars, expected ${K.MAP_W}`);
-                const bad = [...r.text].find(ch => !TILES.includes(ch));
+                const bad = [...r.text].find(ch => !TILES.includes(ch) && stoneIndex(ch) < 0);
                 if (bad) gt.problem(`${name}, line ${r.line + 1}: unknown tile '${bad}'`);
             }
             const all = l.rows.map(r => r.text).join('');
@@ -524,6 +534,7 @@ GameTank.defineGame({
         cellH: () => K.TILE,
         empty: '.',
         unique: ['S'],
+        colors: { name: 'Stone', table: 'stone_colors', chars: () => stoneChars },
         tiles: [
             { ch: '.', name: 'Empty' },
             { ch: '#', name: 'Stone' },

@@ -639,6 +639,13 @@ static const unsigned char glyph_rects[] = {
 static const unsigned char pair_colors[] = { COL(4, 3, 5), COL(6, 3, 6), COL(3, 3, 6), COL(0, 3, 7) };
 static const unsigned char plat_colors[] = { C_PLAT_SLOW, C_PLAT_MID, C_PLAT_FAST };
 static const char plat_chars[] = "poP";
+
+// One colour per letter of stone_chars. The GameTank Tools level editor adds entries here.
+static const char stone_chars[] = "#ABDEFGHIJKMNOQRTUVWXYZ";
+static const unsigned char stone_colors[] = {
+    C_STONE,
+    COL(3, 1, 0),
+};
 #pragma rodata-name (pop)
 
 static const unsigned char* voice_ptr[NUM_FM_CHANNELS];
@@ -711,9 +718,13 @@ static void draw_glyph(unsigned char g, unsigned char x, unsigned char y, unsign
 static void draw_tile(unsigned char r, unsigned char c, unsigned char x) {
     char t = map[r][c];
     unsigned char y = r * TILE, g;
-    if (t == '#') {
-        gram_rect(x, y, (c < MAP_W - 1 && map[r][c + 1] == '#') ? TILE : TILE - 1, TILE - 1, C_STONE);
-    } else if (t == 'C') {
+    for (g = 0; g < sizeof(stone_colors); ++g) {
+        if (stone_chars[g] == t) {
+            gram_rect(x, y, (c < MAP_W - 1 && map[r][c + 1] == t) ? TILE : TILE - 1, TILE - 1, stone_colors[g]);
+            return;
+        }
+    }
+    if (t == 'C') {
         draw_glyph(GLYPH_C, x, y, 0);
     } else if (t >= '1' && t <= '4') {
         draw_glyph(GLYPH_TELE, x, y, pair_colors[t - '1']);
@@ -842,7 +853,7 @@ static char tile_at(unsigned char px, unsigned char py) {
 }
 
 static bool is_solid(char t) {
-    return t == '#' || t == 'b' || t == '^' || t == '<' || t == '>' || t == 'L' || t == 'v' || t == 'c' || t == 'C';
+    return (t >= 'A' && t <= 'Z' && t != 'P') || t == '#' || t == 'b' || t == '^' || t == '<' || t == '>' || t == 'v' || t == 'c';
 }
 
 static void bounce_on(unsigned char px, unsigned char py) {
