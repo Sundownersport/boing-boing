@@ -602,6 +602,7 @@ static signed char mover_dir[MAX_MOVERS];
 static unsigned char platforms;
 static unsigned char plat_x[MAX_PLATFORMS], plat_y[MAX_PLATFORMS], plat_speed[MAX_PLATFORMS];
 static unsigned char plat_tr[MAX_PLATFORMS], plat_tc[MAX_PLATFORMS], plat_pr[MAX_PLATFORMS], plat_pc[MAX_PLATFORMS];
+static unsigned char plat_tx[MAX_PLATFORMS], plat_ty[MAX_PLATFORMS];
 
 #pragma rodata-name (push, "PROG0")
 
@@ -1124,6 +1125,8 @@ static void plat_next(unsigned char i) {
             plat_pc[i] = c;
             plat_tr[i] = nr;
             plat_tc[i] = nc;
+            plat_tx[i] = nc * TILE;
+            plat_ty[i] = nr * TILE;
             return;
         }
     }
@@ -1131,50 +1134,63 @@ static void plat_next(unsigned char i) {
     plat_tc[i] = plat_pc[i];
     plat_pr[i] = r;
     plat_pc[i] = c;
+    plat_tx[i] = plat_tc[i] * TILE;
+    plat_ty[i] = plat_tr[i] * TILE;
+}
+
+static bool plat_touches(unsigned char i, unsigned char l, unsigned char t) {
+    unsigned char x = plat_x[i], y = plat_y[i];
+    return l < (unsigned char)(x + TILE) && (unsigned char)(l + BALL_SIZE) > x && t < (unsigned char)(y + TILE) && (unsigned char)(t + BALL_SIZE) > y;
 }
 
 static unsigned char plat_hit() {
     unsigned char i, l = bx >> SUB, t = by >> SUB;
     for (i = 0; i < platforms; ++i) {
-        if (l < plat_x[i] + TILE && l + BALL_SIZE > plat_x[i] && t < plat_y[i] + TILE && t + BALL_SIZE > plat_y[i]) return i;
+        if (plat_touches(i, l, t)) return i;
     }
     return NO_PLATFORM;
 }
 
 static void move_platforms() {
-    unsigned char i, steps, x, y, tx, ty;
+    unsigned char i, steps, x, y, l = bx >> SUB, t = by >> SUB;
     signed char dx, dy;
     for (i = 0; i < platforms; ++i) {
+        steps = plat_speed[i] ? plat_speed[i] : (timer & 1);
+        if (!steps) continue;
         x = plat_x[i];
         y = plat_y[i];
+        if (x == plat_tx[i] && y == plat_ty[i]) plat_next(i);
         dx = dy = 0;
-        steps = plat_speed[i] ? plat_speed[i] : (timer & 1);
-        while (steps--) {
-            tx = plat_tc[i] * TILE;
-            ty = plat_tr[i] * TILE;
-            if (x == tx && y == ty) {
-                plat_next(i);
-                tx = plat_tc[i] * TILE;
-                ty = plat_tr[i] * TILE;
-            }
-            dx = tx > x ? 1 : (tx < x ? -1 : 0);
-            dy = ty > y ? 1 : (ty < y ? -1 : 0);
-            x += dx;
-            y += dy;
+        if (plat_tx[i] > x) {
+            dx = 1;
+            x += steps;
+        } else if (plat_tx[i] < x) {
+            dx = -1;
+            x -= steps;
+        } else if (plat_ty[i] > y) {
+            dy = 1;
+            y += steps;
+        } else if (plat_ty[i] < y) {
+            dy = -1;
+            y -= steps;
         }
         plat_x[i] = x;
         plat_y[i] = y;
-        if (plat_hit() == i) {
+        if (plat_touches(i, l, t)) {
             if (dy < 0) {
                 by = (int)(y - BALL_SIZE) << SUB;
+                t = y - BALL_SIZE;
                 vy = -BOUNCE;
             } else if (dy > 0) {
                 by = (int)(y + TILE) << SUB;
+                t = y + TILE;
                 if (vy < 0) vy = 0;
             } else if (dx > 0) {
                 bx = (int)(x + TILE) << SUB;
+                l = x + TILE;
             } else if (dx < 0) {
                 bx = (int)(x - BALL_SIZE) << SUB;
+                l = x - BALL_SIZE;
             }
         }
     }
