@@ -4,6 +4,7 @@
 #include "gt/gfx/draw_direct.h"
 #include "gt/feature/text/text.h"
 #include "gt/feature/persist/persist.h"
+#include "gt/feature/paddleInput/paddleInput.h"
 #include "gt/banking.h"
 #include "gen/bank_nums.h"
 #include "gt/audio/audio_coprocessor.h"
@@ -48,6 +49,8 @@
 #define ACCEL 5
 #define FRICTION 2
 #define MAX_VX 53
+#define PADDLE_DEADZONE 2
+#define PADDLE_RANGE 32
 #define DASH_SPEED 106
 #define DASH_FRAMES 44
 #define LOW_BOUNCE 88
@@ -66,6 +69,7 @@
 #define STATE_DEAD 2
 #define STATE_CLEAR 3
 #define STATE_WIN 4
+#define STATE_SELECT 5
 
 /*
     To add a level, copy this block (from { to },) into the list below,
@@ -591,6 +595,8 @@ static unsigned char keys_left, keys_total;
 static unsigned char level;
 static unsigned char start_level, best_level, repeat_timer, cheat_pos;
 static unsigned char state;
+static unsigned char paddle, paddle_center;
+static int start_mask;
 static unsigned char timer;
 static int bx, by, vx, vy;
 static unsigned char dash_timer;
@@ -875,6 +881,7 @@ static void load_level() {
     change_rom_bank(BANK_PROG0);
     load_level_banked();
     pop_rom_bank();
+    paddle_center = get_paddle_rotation(0);
 }
 
 #pragma code-name (push, "PROG0")
@@ -1202,8 +1209,26 @@ static void update_shake() {
     redraw_tile(shake_r, shake_c, (shake_timer & 2) ? 1 : 0);
 }
 
+static void steer_paddle() {
+    int d = get_paddle_rotation(0) - paddle_center;
+    int want;
+    if (d > PADDLE_DEADZONE) d -= PADDLE_DEADZONE;
+    else if (d < -PADDLE_DEADZONE) d += PADDLE_DEADZONE;
+    else d = 0;
+    want = d * MAX_VX / PADDLE_RANGE;
+    if (want > MAX_VX) want = MAX_VX;
+    else if (want < -MAX_VX) want = -MAX_VX;
+    if (vx < want - ACCEL) vx += ACCEL;
+    else if (vx > want + ACCEL) vx -= ACCEL;
+    else vx = want;
+}
+
 static void steer() {
     if (dash_timer) return;
+    if (paddle) {
+        steer_paddle();
+        return;
+    }
     if (player1_buttons & INPUT_MASK_LEFT) {
         vx -= ACCEL;
         if (vx < -MAX_VX) vx = -MAX_VX;
@@ -1220,7 +1245,7 @@ static void steer() {
 }
 
 static void update_play_banked() {
-    if (player1_new_buttons & INPUT_MASK_START) {
+    if (player1_new_buttons & start_mask) {
         load_level();
         return;
     }
@@ -1265,6 +1290,10 @@ static void check_cheat() {
 }
 
 static void pick_level_banked() {
+    if (paddle) {
+        start_level = (get_paddle_rotation(0) * (best_level + 1)) >> 8;
+        return;
+    }
     check_cheat();
     if (player1_new_buttons & (INPUT_MASK_LEFT | INPUT_MASK_RIGHT)) {
         repeat_timer = 20;
@@ -1364,6 +1393,11 @@ static void draw_level() {
 
 static int title_y, title_vy;
 
+static void draw_prompt(unsigned char y) {
+    if (paddle) draw_text(36, y, "PRESS A");
+    else draw_text(20, y, "PRESS START");
+}
+
 static void draw_title() {
     title_vy += GRAVITY;
     title_y += title_vy;
@@ -1374,7 +1408,12 @@ static void draw_title() {
     draw_text(16, 32, "BOING BOING!");
     queue_draw_box(40, 102, 48, 7, C_STONE);
     draw_ball(61, title_y >> SUB);
-    if (timer & 32) draw_text(20, 64, "PRESS START");
+    if (state == STATE_TITLE) {
+        draw_text(32, 48, "A PADDLE");
+        draw_text(28, 64, "B GAMEPAD");
+        return;
+    }
+    if (timer & 32) draw_prompt(64);
     draw_text(32, 48, "LEVEL");
     draw_text(80, 48, two_digits(start_level + 1));
     if (start_level) draw_text(16, 48, "<");
@@ -1391,12 +1430,23 @@ void main() {
     timer = 0;
 
     while (1) {
-        update_inputs();
+        if (paddle) update_paddle_inputs();
+        else update_inputs();
         ++timer;
 
         switch (state) {
         case STATE_TITLE:
-            if ((player1_new_buttons & INPUT_MASK_START) || ((player1_new_buttons & INPUT_MASK_A) && !cheat_pos)) {
+            if (player1_new_buttons & INPUT_MASK_A) {
+                paddle = 1;
+                start_mask = INPUT_MASK_PADDLE_A;
+                state = STATE_SELECT;
+            } else if (player1_new_buttons & (INPUT_MASK_B | INPUT_MASK_START)) {
+                start_mask = INPUT_MASK_START;
+                state = STATE_SELECT;
+            }
+            break;
+        case STATE_SELECT:
+            if ((player1_new_buttons & start_mask) || (!paddle && (player1_new_buttons & INPUT_MASK_A) && !cheat_pos)) {
                 level = start_level;
                 load_level();
                 state = STATE_PLAY;
@@ -1431,7 +1481,8 @@ void main() {
             }
             break;
         case STATE_WIN:
-            if (player1_new_buttons & INPUT_MASK_START) {
+            if (player1_new_buttons & start_mask) {
+                paddle = 0;
                 state = STATE_TITLE;
             }
             break;
@@ -1439,6 +1490,7 @@ void main() {
 
         switch (state) {
         case STATE_TITLE:
+        case STATE_SELECT:
             queue_clear_screen(C_BG);
             draw_title();
             break;
@@ -1459,7 +1511,7 @@ void main() {
         case STATE_WIN:
             queue_clear_screen(C_BG);
             draw_text(28, 48, "YOU WIN!");
-            draw_text(20, 72, "PRESS START");
+            draw_prompt(72);
             break;
         }
         queue_clear_border(0);
